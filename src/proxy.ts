@@ -4,10 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Keeps the Supabase session cookie fresh and gates /admin.
  *
+ * Named proxy, not middleware: the middleware file convention is deprecated
+ * in Next 16 and warns on every build.
+ *
  * Only the JWT is checked here — whether that user is an allowed admin is
  * decided in the page itself, which can reach the database.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
