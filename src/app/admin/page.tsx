@@ -94,6 +94,9 @@ export default async function AdminPage() {
                       ) : (
                         <span className="text-rose-700"> — {tab.problem}</span>
                       )}
+                      {tab.note && (
+                        <span className="text-amber-700"> — {tab.note}</span>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -239,9 +239,39 @@ export async function readCrm(
   const monthAt = indexOfColumn(headers, crmColumns.month.label);
   if (monthAt < 0) return null;
 
-  const byName = new Map(
-    projects.map((project) => [normalise(project.name), project.id]),
-  );
+  /**
+   * Columns are keyed by project name, but a project renamed in Live Projects
+   * without the CRM header being renamed too would silently lose all its
+   * money. So: match by name first, then pair whatever is left over in order.
+   * Both tabs come from the same generated workbook, so position is a sound
+   * fallback, and the admin Live check reports the drift either way.
+   */
+  const dataColumns = headers
+    .map((text, column) => ({ text, column }))
+    .filter((entry) => entry.column !== monthAt && entry.text.trim() !== "");
+
+  const columnToProject = new Map<number, string>();
+  const claimed = new Set<string>();
+
+  for (const project of projects) {
+    const match = dataColumns.find(
+      (entry) =>
+        !columnToProject.has(entry.column) &&
+        normalise(entry.text) === normalise(project.name),
+    );
+    if (match) {
+      columnToProject.set(match.column, project.id);
+      claimed.add(project.id);
+    }
+  }
+
+  const unclaimedProjects = projects.filter((p) => !claimed.has(p.id));
+  const freeColumns = dataColumns.filter((e) => !columnToProject.has(e.column));
+
+  unclaimedProjects.forEach((project, index) => {
+    const column = freeColumns[index];
+    if (column) columnToProject.set(column.column, project.id);
+  });
 
   const amounts: CrmCollection["amounts"] = {};
 
@@ -252,12 +282,7 @@ export async function readCrm(
     );
     if (!month) continue; // skips the Total row and any blanks
 
-    headers.forEach((headerText, column) => {
-      if (column === monthAt) return;
-
-      const projectId = byName.get(normalise(headerText));
-      if (!projectId) return;
-
+    columnToProject.forEach((projectId, column) => {
       const raw = cell(row, column);
       if (raw === "") return;
 
