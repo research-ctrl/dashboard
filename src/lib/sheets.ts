@@ -16,12 +16,13 @@ import type {
  * Reads a Google Sheet that is shared "anyone with the link".
  *
  * The gviz endpoint returns CSV without any API key, which keeps deployment to
- * a single environment variable-free path. Responses are tagged "sheets", so
- * the webhook in /api/sheets/changed can drop them the instant an editor saves.
- * The 5 minute revalidate is only a safety net for a webhook that never lands.
+ * a single environment variable-free path.
+ *
+ * Nothing here is cached, so the board can never show a row the sheet no
+ * longer has. Reads are driven by page loads, and page loads are driven by
+ * the Realtime push in /api/sheets/changed — so an idle board costs nothing.
  */
 const SHEET_TAG = "sheets";
-const FALLBACK_REVALIDATE_SECONDS = 300;
 
 function csvUrl(spreadsheetId: string, tab: string) {
   const base = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`;
@@ -105,7 +106,12 @@ async function fetchTab(
 ): Promise<string[][] | null> {
   try {
     const response = await fetch(csvUrl(spreadsheetId, tab), {
-      next: { revalidate: FALLBACK_REVALIDATE_SECONDS, tags: [SHEET_TAG] },
+      // Never cached. Next 16 does not cache fetch by default, and opting in
+      // only bought a window where the board could show rows the sheet no
+      // longer had. Requests happen when somebody loads the board, not on a
+      // timer, so this costs nothing while nothing is being looked at.
+      cache: "no-store",
+      next: { tags: [SHEET_TAG] },
     });
 
     if (!response.ok) return null;

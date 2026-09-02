@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/admin/actions";
 import { ConnectionsForm } from "@/components/admin/connections-form";
 import { getAdminUser, needsSetup } from "@/lib/auth";
+import { readConnectionStatus } from "@/lib/connection-status";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Connections" };
@@ -16,9 +17,10 @@ export default async function AdminPage() {
   const admin = await getAdminUser();
   if (!admin) redirect("/admin/login");
 
-  const connections = await prisma.chapterConnection.findMany({
-    orderBy: { createdAt: "asc" },
-  });
+  const [connections, status] = await Promise.all([
+    prisma.chapterConnection.findMany({ orderBy: { createdAt: "asc" } }),
+    readConnectionStatus(),
+  ]);
 
   return (
     <main className="flex-1 bg-white">
@@ -38,15 +40,67 @@ export default async function AdminPage() {
         </div>
 
         <p className="mt-3 max-w-2xl text-xs leading-relaxed text-neutral-600">
-          One Google Sheet per chapter, four tabs inside it. Upload the workbooks
-          from /excel to Drive, open each as a Google Sheet, then paste its link
-          here. These are stored in Supabase, so every admin sees the same values.
+          One Google Sheet per chapter, four tabs inside it. Each sheet must be
+          shared as Anyone with the link. Saved to Supabase, so every admin sees
+          the same values.
         </p>
 
-        <p className="mt-3 max-w-2xl rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
-          The sheet reads are not built yet. Links are saved, but the board still
-          renders its built-in data.
-        </p>
+        {/* Read live on every load: a failed read silently falls back to the
+            built-in rows, so without this the only symptom is "my edits do
+            nothing". */}
+        <section className="mt-6 rounded-xl border border-neutral-200 p-4">
+          <h2 className="text-[10px] font-medium tracking-[0.15em] text-neutral-500 uppercase">
+            Live check
+          </h2>
+
+          <div className="mt-3 flex flex-col gap-4">
+            {status.map((chapter) => (
+              <div key={chapter.id}>
+                <div className="flex items-baseline gap-2 text-xs">
+                  <span className="font-medium text-neutral-900">
+                    {chapter.name}
+                  </span>
+                  {chapter.live ? (
+                    <span className="text-emerald-700">reading from Sheets</span>
+                  ) : chapter.spreadsheetId ? (
+                    <span className="text-rose-700">
+                      not reading — showing built-in data
+                    </span>
+                  ) : (
+                    <span className="text-neutral-400">no sheet linked</span>
+                  )}
+                </div>
+
+                {chapter.spreadsheetId && (
+                  <p className="mt-0.5 text-[11px] break-all text-neutral-400">
+                    {chapter.spreadsheetId}
+                  </p>
+                )}
+
+                <ul className="mt-1.5 flex flex-col gap-0.5">
+                  {chapter.tabs.map((tab) => (
+                    <li key={tab.tab} className="text-[11px] text-neutral-600">
+                      <span
+                        className={tab.ok ? "text-emerald-700" : "text-rose-700"}
+                      >
+                        {tab.ok ? "OK" : "FAIL"}
+                      </span>{" "}
+                      <span className="text-neutral-900">{tab.tab}</span>
+                      {tab.ok ? (
+                        <span className="text-neutral-400">
+                          {" "}
+                          — {tab.rows} row{tab.rows === 1 ? "" : "s"}
+                        </span>
+                      ) : (
+                        <span className="text-rose-700"> — {tab.problem}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <ConnectionsForm connections={connections} />
 
