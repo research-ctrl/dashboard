@@ -1,28 +1,26 @@
-import {
-  crmColumns,
-  opexColumns,
-  pipelineColumns,
-  projectColumns,
-} from "@/data/columns";
-import { MONTHS, type Month } from "@/data/months";
-import type {
-  CrmCollection,
-  OpexLine,
-  PipelineProject,
-  Project,
-} from "@/data/types";
-
 /**
- * Reads a Google Sheet that is shared "anyone with the link".
+ * Reads a Google Sheet tab and returns it as-is.
  *
- * The gviz endpoint returns CSV without any API key, which keeps deployment to
- * a single environment variable-free path.
+ * No mapping onto typed models, and deliberately no cross-referencing between
+ * tabs: what the sheet holds is what the dashboard shows. Add a column in
+ * Sheets and it appears; rename one and the header changes with it. Nothing
+ * here needs to know what the columns mean.
  *
- * Nothing here is cached, so the board can never show a row the sheet no
- * longer has. Reads are driven by page loads, and page loads are driven by
- * the Realtime push in /api/sheets/changed — so an idle board costs nothing.
+ * The gviz endpoint returns CSV without any API key. Nothing is cached, so the
+ * board can never show a row the sheet no longer has — reads follow page
+ * loads, and page loads follow the Realtime push, so an idle board is free.
  */
-const SHEET_TAG = "sheets";
+export const SHEET_TAG = "sheets";
+
+/** Internal join key we add to the workbooks; never worth showing. */
+const HIDDEN_COLUMNS = ["id (do not edit)", "id"];
+
+export type SheetTable = {
+  headers: string[];
+  rows: string[][];
+  /** A trailing summary row, shown as a footer rather than a normal row. */
+  totalRow: string[] | null;
+};
 
 function csvUrl(spreadsheetId: string, tab: string) {
   const base = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`;
@@ -75,226 +73,82 @@ export function parseCsv(text: string): string[][] {
   return rows;
 }
 
+function normalise(value: string) {
+  return value.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
 /**
- * Headers carry an owner in brackets — "Inventory (Lincoln)" — and owners
- * change. Match on the label alone so renaming an owner never breaks a read.
+ * A trailing row with an empty first cell, or one labelled "Total", is the
+ * sheet's own summary line — the workbooks generate it as =SUM(). It is shown
+ * as a footer, with the sheet's numbers, not recomputed.
  */
-function normalise(header: string) {
-  return header.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+function isTotalRow(row: string[]) {
+  const first = normalise(row[0] ?? "");
+  const hasValues = row.slice(1).some((cell) => cell.trim() !== "");
+  return hasValues && (first === "" || first === "total");
 }
 
-function indexOfColumn(headers: string[], label: string) {
-  const target = normalise(label);
-  return headers.findIndex((header) => normalise(header) === target);
-}
+export type ReadResult =
+  | { ok: true; table: SheetTable }
+  | { ok: false; problem: string };
 
-function cell(row: string[], index: number) {
-  return index >= 0 ? (row[index] ?? "").trim() : "";
-}
-
-/** Strips currency symbols, thousands separators and a trailing % sign. */
-export function toNumber(value: string): number {
-  if (!value) return 0;
-  const cleaned = value.replace(/[^0-9.\-]/g, "");
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-async function fetchTab(
+export async function readTable(
   spreadsheetId: string,
   tab: string,
-): Promise<string[][] | null> {
+): Promise<ReadResult> {
+  if (!spreadsheetId) return { ok: false, problem: "no sheet linked" };
+
   try {
     const response = await fetch(csvUrl(spreadsheetId, tab), {
-      // Never cached. Next 16 does not cache fetch by default, and opting in
-      // only bought a window where the board could show rows the sheet no
-      // longer had. Requests happen when somebody loads the board, not on a
-      // timer, so this costs nothing while nothing is being looked at.
       cache: "no-store",
       next: { tags: [SHEET_TAG] },
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) return { ok: false, problem: `HTTP ${response.status}` };
 
     const text = await response.text();
+
     // A sheet that is not link-shared answers with a sign-in HTML page.
-    if (text.trimStart().startsWith("<")) return null;
-
-    const rows = parseCsv(text);
-    return rows.length > 1 ? rows : null;
-  } catch {
-    return null;
-  }
-}
-
-function rowId(prefix: string, row: string[], headers: string[], index: number) {
-  const explicit = cell(row, indexOfColumn(headers, "id"));
-  return explicit || `${prefix}-${index + 1}`;
-}
-
-export async function readProjects(
-  spreadsheetId: string,
-  tab: string,
-  prefix: string,
-): Promise<Project[] | null> {
-  const rows = await fetchTab(spreadsheetId, tab);
-  if (!rows) return null;
-
-  const [headers, ...body] = rows;
-  const at = (label: string) => indexOfColumn(headers, label);
-
-  const nameAt = at(projectColumns.name.label);
-  if (nameAt < 0) return null;
-
-  return body
-    .filter((row) => cell(row, nameAt) !== "")
-    .map((row, index) => ({
-      id: rowId(`${prefix}-p`, row, headers, index),
-      name: cell(row, nameAt),
-      completion: toNumber(cell(row, at(projectColumns.completion.label))),
-      soldAssets: toNumber(cell(row, at(projectColumns.soldAssets.label))),
-      inventory: toNumber(cell(row, at(projectColumns.inventory.label))),
-      expectedOutcome: toNumber(
-        cell(row, at(projectColumns.expectedOutcome.label)),
-      ),
-      expectedHandover: cell(row, at(projectColumns.expectedHandover.label)),
-      repaidToFirstProject: toNumber(
-        cell(row, at(projectColumns.repaidToFirstProject.label)),
-      ),
-      yearStarted: toNumber(cell(row, at(projectColumns.yearStarted.label))),
-      comments: cell(row, at(projectColumns.comments.label)),
-    }));
-}
-
-export async function readPipeline(
-  spreadsheetId: string,
-  tab: string,
-  prefix: string,
-): Promise<PipelineProject[] | null> {
-  const rows = await fetchTab(spreadsheetId, tab);
-  if (!rows) return null;
-
-  const [headers, ...body] = rows;
-  const at = (label: string) => indexOfColumn(headers, label);
-
-  const nameAt = at(pipelineColumns.name.label);
-  if (nameAt < 0) return null;
-
-  return body
-    .filter((row) => cell(row, nameAt) !== "")
-    .map((row, index) => ({
-      id: rowId(`${prefix}-pl`, row, headers, index),
-      name: cell(row, nameAt),
-      onward: cell(row, at(pipelineColumns.onward.label)),
-      inventory: toNumber(cell(row, at(pipelineColumns.inventory.label))),
-      ticketSize: toNumber(cell(row, at(pipelineColumns.ticketSize.label))),
-      constructionCost: toNumber(
-        cell(row, at(pipelineColumns.constructionCost.label)),
-      ),
-      planned: toNumber(cell(row, at(pipelineColumns.planned.label))),
-      status: cell(row, at(pipelineColumns.status.label)),
-    }));
-}
-
-export async function readOpex(
-  spreadsheetId: string,
-  tab: string,
-  prefix: string,
-): Promise<OpexLine[] | null> {
-  const rows = await fetchTab(spreadsheetId, tab);
-  if (!rows) return null;
-
-  const [headers, ...body] = rows;
-  const at = (label: string) => indexOfColumn(headers, label);
-
-  const nameAt = at(opexColumns.name.label);
-  if (nameAt < 0) return null;
-
-  return body
-    .filter((row) => cell(row, nameAt) !== "")
-    .map((row, index) => ({
-      id: rowId(`${prefix}-o`, row, headers, index),
-      name: cell(row, nameAt),
-      amount: toNumber(cell(row, at(opexColumns.amount.label))),
-      extra: toNumber(cell(row, at(opexColumns.extra.label))),
-      remark: cell(row, at(opexColumns.remark.label)),
-    }));
-}
-
-/**
- * The CRM tab is a matrix: a Month column, then one column per project, keyed
- * by the project's name. Names are matched back to project ids so a renamed
- * project keeps its column.
- */
-export async function readCrm(
-  spreadsheetId: string,
-  tab: string,
-  year: number,
-  projects: Project[],
-): Promise<CrmCollection | null> {
-  const rows = await fetchTab(spreadsheetId, tab);
-  if (!rows) return null;
-
-  const [headers, ...body] = rows;
-  const monthAt = indexOfColumn(headers, crmColumns.month.label);
-  if (monthAt < 0) return null;
-
-  /**
-   * Columns are keyed by project name, but a project renamed in Live Projects
-   * without the CRM header being renamed too would silently lose all its
-   * money. So: match by name first, then pair whatever is left over in order.
-   * Both tabs come from the same generated workbook, so position is a sound
-   * fallback, and the admin Live check reports the drift either way.
-   */
-  const dataColumns = headers
-    .map((text, column) => ({ text, column }))
-    .filter((entry) => entry.column !== monthAt && entry.text.trim() !== "");
-
-  const columnToProject = new Map<number, string>();
-  const claimed = new Set<string>();
-
-  for (const project of projects) {
-    const match = dataColumns.find(
-      (entry) =>
-        !columnToProject.has(entry.column) &&
-        normalise(entry.text) === normalise(project.name),
-    );
-    if (match) {
-      columnToProject.set(match.column, project.id);
-      claimed.add(project.id);
-    }
-  }
-
-  const unclaimedProjects = projects.filter((p) => !claimed.has(p.id));
-  const freeColumns = dataColumns.filter((e) => !columnToProject.has(e.column));
-
-  unclaimedProjects.forEach((project, index) => {
-    const column = freeColumns[index];
-    if (column) columnToProject.set(column.column, project.id);
-  });
-
-  const amounts: CrmCollection["amounts"] = {};
-
-  for (const row of body) {
-    const monthLabel = cell(row, monthAt);
-    const month = MONTHS.find(
-      (candidate) => candidate.toLowerCase() === monthLabel.slice(0, 3).toLowerCase(),
-    );
-    if (!month) continue; // skips the Total row and any blanks
-
-    columnToProject.forEach((projectId, column) => {
-      const raw = cell(row, column);
-      if (raw === "") return;
-
-      const value = toNumber(raw);
-      if (value === 0) return;
-
-      amounts[projectId] = {
-        ...(amounts[projectId] ?? {}),
-        [month as Month]: value,
+    if (text.trimStart().startsWith("<")) {
+      return {
+        ok: false,
+        problem: "not shared — set the sheet to Anyone with the link",
       };
-    });
-  }
+    }
 
-  return { year, amounts };
+    const all = parseCsv(text).filter((row) =>
+      row.some((cell) => cell.trim() !== ""),
+    );
+
+    if (all.length < 1) {
+      return { ok: false, problem: `"${tab}" is empty, or the tab name is wrong` };
+    }
+
+    const [rawHeaders, ...rawRows] = all;
+
+    // Drop the internal id column, and any column with no header at all.
+    const keep = rawHeaders
+      .map((header, index) => ({ header, index }))
+      .filter(
+        ({ header }) =>
+          header.trim() !== "" && !HIDDEN_COLUMNS.includes(normalise(header)),
+      );
+
+    const headers = keep.map(({ header }) => header.trim());
+    const pick = (row: string[]) =>
+      keep.map(({ index }) => (row[index] ?? "").trim());
+
+    const body = rawRows.map(pick);
+
+    const last = body[body.length - 1];
+    const totalRow = last && isTotalRow(last) ? last : null;
+    const rows = totalRow ? body.slice(0, -1) : body;
+
+    return { ok: true, table: { headers, rows, totalRow } };
+  } catch (cause) {
+    return {
+      ok: false,
+      problem: cause instanceof Error ? cause.message : "request failed",
+    };
+  }
 }

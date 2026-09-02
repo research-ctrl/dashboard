@@ -1,18 +1,26 @@
-import { chapters as builtInChapters } from "@/data/chapters";
-import type { Chapter } from "@/data/types";
+import { chapters as chapterMeta } from "@/data/chapters";
+import type { ChapterMeta } from "@/data/types";
 import { prisma } from "@/lib/prisma";
-import { readCrm, readOpex, readPipeline, readProjects } from "@/lib/sheets";
+import { readTable, type ReadResult } from "@/lib/sheets";
 
-export type ChapterSource = "sheets" | "built-in";
+export type LoadedTable = {
+  /** The tab name in the workbook, shown as the table's heading. */
+  tab: string;
+  result: ReadResult;
+};
 
-export type LoadedChapter = Chapter & { source: ChapterSource };
+export type LoadedChapter = ChapterMeta & {
+  spreadsheetId: string;
+  tables: LoadedTable[];
+};
 
 /**
- * Chapter name, accent and time zone stay in code; the rows come from Google
- * Sheets once a chapter has been connected in /admin.
+ * Chapter name, accent and time zone stay in code; every table comes straight
+ * from that chapter's Google Sheet.
  *
- * A sheet that cannot be read falls back to the built-in rows rather than
- * blanking the board, and reports itself as "built-in" so the page can say so.
+ * There is deliberately no built-in fallback any more. A silent fallback looks
+ * exactly like a successful read, which cost hours of "my edits do nothing" —
+ * a tab that cannot be read now says so, in place.
  */
 export async function loadChapters(): Promise<LoadedChapter[]> {
   let connections: Awaited<
@@ -22,49 +30,31 @@ export async function loadChapters(): Promise<LoadedChapter[]> {
   try {
     connections = await prisma.chapterConnection.findMany();
   } catch {
-    // No database reachable — the board still renders from built-in data.
+    // No database reachable — every chapter reports it rather than inventing data.
   }
 
   const byId = new Map(connections.map((row) => [row.id, row]));
 
   return Promise.all(
-    builtInChapters.map(async (chapter): Promise<LoadedChapter> => {
+    chapterMeta.map(async (chapter): Promise<LoadedChapter> => {
       const connection = byId.get(chapter.id);
+      const spreadsheetId = connection?.spreadsheetId ?? "";
 
-      if (!connection?.spreadsheetId) {
-        return { ...chapter, source: "built-in" };
-      }
+      const tabs = [
+        connection?.projectsTab ?? "Live Projects",
+        connection?.pipelineTab ?? "Pipeline",
+        connection?.opexTab ?? "Opex",
+        connection?.crmTab ?? "CRM Collection",
+      ];
 
-      const { spreadsheetId } = connection;
-
-      const [projects, pipeline, opex] = await Promise.all([
-        readProjects(spreadsheetId, connection.projectsTab, chapter.id),
-        readPipeline(spreadsheetId, connection.pipelineTab, chapter.id),
-        readOpex(spreadsheetId, connection.opexTab, chapter.id),
-      ]);
-
-      // Nothing readable at all: the sheet is probably not link-shared.
-      if (!projects && !pipeline && !opex) {
-        return { ...chapter, source: "built-in" };
-      }
-
-      const resolvedProjects = projects ?? chapter.projects;
-
-      const crm = await readCrm(
-        spreadsheetId,
-        connection.crmTab,
-        connection.crmYear,
-        resolvedProjects,
+      const tables = await Promise.all(
+        tabs.map(async (tab) => ({
+          tab,
+          result: await readTable(spreadsheetId, tab),
+        })),
       );
 
-      return {
-        ...chapter,
-        projects: resolvedProjects,
-        pipeline: pipeline ?? chapter.pipeline,
-        opex: opex ?? chapter.opex,
-        crm: crm ?? chapter.crm,
-        source: "sheets",
-      };
+      return { ...chapter, spreadsheetId, tables };
     }),
   );
 }

@@ -89,13 +89,11 @@ export default async function AdminPage() {
                       {tab.ok ? (
                         <span className="text-neutral-400">
                           {" "}
-                          — {tab.rows} row{tab.rows === 1 ? "" : "s"}
+                          — {tab.rows} row{tab.rows === 1 ? "" : "s"},{" "}
+                          {tab.columns} column{tab.columns === 1 ? "" : "s"}
                         </span>
                       ) : (
                         <span className="text-rose-700"> — {tab.problem}</span>
-                      )}
-                      {tab.note && (
-                        <span className="text-amber-700"> — {tab.note}</span>
                       )}
                     </li>
                   ))}

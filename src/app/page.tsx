@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const chapters = await loadChapters();
-  const anyLive = chapters.some((chapter) => chapter.source === "sheets");
+  const unlinked = chapters.filter((chapter) => chapter.spreadsheetId === "");
 
   return (
     <main className="flex-1 bg-white">
@@ -18,9 +18,9 @@ export default async function Home() {
         <h1 className="sr-only">Dashboard</h1>
 
         <div className="mb-4 flex items-center justify-end gap-3">
-          {!anyLive && (
+          {unlinked.length > 0 && (
             <span className="text-[10px] tracking-[0.12em] text-neutral-400 uppercase">
-              Showing built-in data — connect the sheets in /admin
+              {unlinked.map((c) => c.name).join(", ")} — link a sheet in /admin
             </span>
           )}
           <LogoCurtain />
