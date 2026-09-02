@@ -99,7 +99,11 @@ export async function signIn(
     return { error: "That account is not an admin here." };
   }
 
-  redirect("/admin");
+  // Only ever an in-app path, so a crafted ?next= cannot bounce elsewhere.
+  const next = String(formData.get("next") ?? "");
+  const target = next.startsWith("/") && !next.startsWith("//") ? next : "/admin";
+
+  redirect(target);
 }
 
 export async function signOut() {

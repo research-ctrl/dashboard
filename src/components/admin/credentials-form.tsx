@@ -12,15 +12,19 @@ export function CredentialsForm({
   action,
   submitLabel,
   withConfirm = false,
+  next,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   submitLabel: string;
   withConfirm?: boolean;
+  next?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-4">
+      {next && <input type="hidden" name="next" value={next} />}
+
       <div>
         <label className={label} htmlFor="email">
           Email
