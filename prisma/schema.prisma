@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Who may reach /admin. Rows hold the Supabase auth user id, so the JWT is
+/// the credential and this table is only the allowlist. An empty table is what
+/// opens /admin/setup; once a row exists, setup refuses to run again.
+model AdminUser {
+  id        String   @id
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("admin_users")
+}
+
+/// One Google Sheet per chapter, four tabs inside it.
+model ChapterConnection {
+  id            String   @id
+  name          String
+  spreadsheetId String   @default("")
+  projectsTab   String   @default("Live Projects")
+  pipelineTab   String   @default("Pipeline")
+  opexTab       String   @default("Opex")
+  crmTab        String   @default("CRM Collection")
+  crmYear       Int      @default(2026)
+  enabled       Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("chapter_connections")
+}
+
+/// Loose key/value for anything else the reads need — a Google API key, a
+/// service-account JSON blob, a cache duration.
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}
+
+/// Bumped whenever a Google Sheet changes. Open dashboards subscribe to this
+/// row through Supabase Realtime, so a save in Sheets pushes to every browser
+/// instead of every browser polling.
+model SyncState {
+  id        String   @id @default("global")
+  version   Int      @default(0)
+  source    String   @default("")
+  updatedAt DateTime @updatedAt
+
+  @@map("sync_state")
+}

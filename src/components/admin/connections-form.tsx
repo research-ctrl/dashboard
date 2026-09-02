@@ -1,0 +1,177 @@
+"use client";
+
+import { useActionState } from "react";
+
+import { saveConnection, type ActionState } from "@/app/admin/actions";
+import {
+  crmColumns,
+  header,
+  opexColumns,
+  pipelineColumns,
+  projectColumns,
+} from "@/data/columns";
+import { ACCENTS, type AccentName } from "@/lib/accents";
+
+export type ConnectionRow = {
+  id: string;
+  name: string;
+  spreadsheetId: string;
+  projectsTab: string;
+  pipelineTab: string;
+  opexTab: string;
+  crmTab: string;
+  crmYear: number;
+};
+
+/** Which accent each chapter uses on the board. */
+const ACCENT_BY_CHAPTER: Record<string, AccentName> = {
+  goa: "amber",
+  portugal: "indigo",
+};
+
+const TABS = [
+  {
+    name: "projectsTab" as const,
+    title: "Live Projects",
+    columns: Object.values(projectColumns).map(header),
+  },
+  {
+    name: "pipelineTab" as const,
+    title: "Pipeline",
+    columns: Object.values(pipelineColumns).map(header),
+  },
+  {
+    name: "opexTab" as const,
+    title: "Opex",
+    columns: Object.values(opexColumns).map(header),
+  },
+  {
+    name: "crmTab" as const,
+    title: "CRM Collection",
+    columns: [header(crmColumns.month), "…then one column per project"],
+  },
+];
+
+const field =
+  "w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-xs text-neutral-900 outline-none focus:border-neutral-500";
+const label = "mb-1 block text-[10px] tracking-[0.12em] text-neutral-500 uppercase";
+
+/** Accepts a full Sheets URL or a bare id, and returns the id. */
+export function extractSheetId(input: string): string {
+  const trimmed = input.trim();
+  const fromUrl = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return fromUrl ? fromUrl[1] : trimmed;
+}
+
+function ChapterCard({ connection }: { connection: ConnectionRow }) {
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+    saveConnection,
+    {},
+  );
+  const accent = ACCENTS[ACCENT_BY_CHAPTER[connection.id] ?? "amber"];
+
+  return (
+    <form
+      action={formAction}
+      className={`rounded-xl border bg-white p-5 ${accent.card}`}
+    >
+      <input type="hidden" name="id" value={connection.id} />
+
+      <div className="flex items-baseline justify-between gap-4">
+        <h2
+          className={`text-sm font-medium tracking-[0.18em] uppercase ${accent.title}`}
+        >
+          {connection.name}
+        </h2>
+        <span className="text-[10px] tracking-[0.12em] uppercase">
+          {connection.spreadsheetId ? (
+            <span className="text-emerald-700">Connected</span>
+          ) : (
+            <span className="text-neutral-400">Not connected</span>
+          )}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <div className="sm:col-span-3">
+          <label className={label} htmlFor={`${connection.id}-sheet`}>
+            Google Sheet link or id
+          </label>
+          <input
+            id={`${connection.id}-sheet`}
+            name="spreadsheetId"
+            defaultValue={connection.spreadsheetId}
+            placeholder="https://docs.google.com/spreadsheets/d/…"
+            className={field}
+          />
+        </div>
+        <div>
+          <label className={label} htmlFor={`${connection.id}-year`}>
+            CRM year
+          </label>
+          <input
+            id={`${connection.id}-year`}
+            name="crmYear"
+            type="number"
+            defaultValue={connection.crmYear}
+            className={field}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {TABS.map((tab) => (
+          <div key={tab.name}>
+            <label className={label} htmlFor={`${connection.id}-${tab.name}`}>
+              {tab.title} — tab name
+            </label>
+            <input
+              id={`${connection.id}-${tab.name}`}
+              name={tab.name}
+              defaultValue={connection[tab.name]}
+              className={field}
+            />
+            <details className="mt-1.5">
+              <summary className="cursor-pointer text-[11px] text-neutral-400 hover:text-neutral-700">
+                expected columns
+              </summary>
+              <ol className="mt-1 list-decimal pl-4 text-[11px] leading-relaxed text-neutral-500">
+                {tab.columns.map((column) => (
+                  <li key={column}>{column}</li>
+                ))}
+              </ol>
+            </details>
+          </div>
+        ))}
+      </div>
+
+      {state.error && (
+        <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+          {state.error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="mt-5 cursor-pointer rounded-md border border-neutral-300 px-3 py-1.5 text-xs text-neutral-900 transition-colors hover:border-neutral-500 hover:bg-neutral-50 disabled:cursor-wait disabled:opacity-60"
+      >
+        {pending ? "Saving…" : "Save"}
+      </button>
+    </form>
+  );
+}
+
+export function ConnectionsForm({
+  connections,
+}: {
+  connections: ConnectionRow[];
+}) {
+  return (
+    <div className="mt-8 flex flex-col gap-8">
+      {connections.map((connection) => (
+        <ChapterCard key={connection.id} connection={connection} />
+      ))}
+    </div>
+  );
+}
