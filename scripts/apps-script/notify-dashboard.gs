@@ -65,17 +65,30 @@ function notifyDashboard(event) {
     source: spreadsheet.getName()
   };
 
+  // onEdit hands us the exact cell. onChange (added or deleted rows) does
+  // not, so fall back to whatever is currently selected — otherwise those
+  // edits arrive with nobody's name on them.
+  var sheet = null;
+  var column = 0;
+
   if (event && event.range) {
-    var sheet = event.range.getSheet();
+    sheet = event.range.getSheet();
+    column = event.range.getColumn();
+  } else if (event && event.source) {
+    sheet = event.source.getActiveSheet();
+    var active = sheet ? sheet.getActiveCell() : null;
+    column = active ? active.getColumn() : 0;
+  }
+
+  if (sheet) {
     params.tab = sheet.getName();
 
-    var column = event.range.getColumn();
-    if (column <= sheet.getLastColumn()) {
+    if (column >= 1 && column <= sheet.getLastColumn()) {
       params.column = sheet.getRange(1, column).getDisplayValue();
     }
 
-    // Sent so the dashboard can fall back to the tab's owner when the edited
-    // column has no name in brackets — CRM project columns, for instance.
+    // Lets the dashboard fall back to the tab's owner when the edited column
+    // has no name in brackets — CRM project columns, for instance.
     params.firstColumn = sheet.getRange(1, 1).getDisplayValue();
   }
 

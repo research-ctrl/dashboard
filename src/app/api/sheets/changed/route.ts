@@ -45,6 +45,21 @@ async function recordEdit(request: NextRequest) {
   });
   if (!connection) return null;
 
+  // One keystroke fires both the onEdit and onChange triggers, and both can
+  // now name a cell. Without this the same edit lands twice.
+  const duplicate = await prisma.sheetEdit.findFirst({
+    where: {
+      chapterId: connection.id,
+      tab,
+      column,
+      editedAt: { gte: new Date(Date.now() - 5000) },
+    },
+  });
+
+  if (duplicate) {
+    return { chapter: connection.id, tab, column, owner, deduplicated: true };
+  }
+
   await prisma.sheetEdit.create({
     data: { chapterId: connection.id, tab, column, owner },
   });
@@ -87,6 +102,15 @@ async function handle(request: NextRequest) {
 
   const source = request.nextUrl.searchParams.get("source") ?? "sheet";
 
+  // Keep the raw parameters of the last call. When an edit does not get
+  // attributed, the difference between "the script sent no cell" and "the
+  // chapter did not match" is otherwise invisible from the outside.
+  const received = Object.fromEntries(
+    [...request.nextUrl.searchParams.entries()].filter(
+      ([key]) => key !== "secret",
+    ),
+  );
+
   // expire: 0 rather than "max" — a webhook wants the next read to wait for
   // fresh rows, not to be served the stale copy while it refetches.
   revalidateTag("sheets", { expire: 0 });
@@ -96,6 +120,12 @@ async function handle(request: NextRequest) {
 
   try {
     edit = await recordEdit(request);
+
+    await prisma.appSetting.upsert({
+      where: { key: "last_webhook" },
+      update: { value: JSON.stringify(received) },
+      create: { key: "last_webhook", value: JSON.stringify(received) },
+    });
 
     const row = await prisma.syncState.upsert({
       where: { id: "global" },

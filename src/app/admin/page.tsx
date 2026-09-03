@@ -19,10 +19,11 @@ export default async function AdminPage() {
   const admin = await getAdminUser();
   if (!admin) redirect("/admin/login");
 
-  const [connections, status, edits] = await Promise.all([
+  const [connections, status, edits, lastWebhook] = await Promise.all([
     prisma.chapterConnection.findMany({ orderBy: { createdAt: "asc" } }),
     readConnectionStatus(),
     prisma.sheetEdit.findMany({ orderBy: { editedAt: "desc" }, take: 60 }),
+    prisma.appSetting.findUnique({ where: { key: "last_webhook" } }),
   ]);
 
   // Stamped here rather than in the client component, so each entry can use
@@ -130,6 +131,24 @@ export default async function AdminPage() {
             ))}
           </div>
         </section>
+
+        {lastWebhook && (
+          <section className="mt-6 rounded-xl border border-neutral-200 p-4">
+            <h2 className="text-[10px] font-medium tracking-[0.15em] text-neutral-500 uppercase">
+              Last webhook received
+            </h2>
+            <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">
+              Exactly what the Apps Script last sent. No{" "}
+              <code className="text-neutral-900">tab</code> or{" "}
+              <code className="text-neutral-900">column</code> here means the
+              sheet is running an older copy of the script, so the edit could
+              not be attributed to anyone.
+            </p>
+            <pre className="mt-2 overflow-x-auto rounded-md bg-neutral-50 p-2 text-[11px] text-neutral-700">
+              {JSON.stringify(JSON.parse(lastWebhook.value), null, 2)}
+            </pre>
+          </section>
+        )}
 
         <EditLog entries={logEntries} />
 
