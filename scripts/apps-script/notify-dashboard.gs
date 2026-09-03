@@ -99,15 +99,14 @@ function notifyDashboard(event) {
  */
 function testWebhook() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadsheet.getSheets()[0];
 
+  // Deliberately sends no cell details. This is a connectivity check, and a
+  // pretend cell would overwrite the real "last updated" record with a tab
+  // nobody edited.
   var params = {
     secret: WEBHOOK_SECRET,
     spreadsheetId: spreadsheet.getId(),
-    source: spreadsheet.getName(),
-    tab: sheet.getName(),
-    column: sheet.getRange(1, 1).getDisplayValue(),
-    firstColumn: sheet.getRange(1, 1).getDisplayValue()
+    source: spreadsheet.getName()
   };
 
   var response = UrlFetchApp.fetch(buildUrl_(params), requestOptions_());
