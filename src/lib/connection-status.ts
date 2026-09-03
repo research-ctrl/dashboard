@@ -1,3 +1,4 @@
+import { tabNames } from "@/data/tabs";
 import { prisma } from "@/lib/prisma";
 import { readTable } from "@/lib/sheets";
 
@@ -31,12 +32,7 @@ export async function readConnectionStatus(): Promise<ChapterStatus[]> {
 
   return Promise.all(
     connections.map(async (connection): Promise<ChapterStatus> => {
-      const tabs = [
-        connection.projectsTab,
-        connection.pipelineTab,
-        connection.opexTab,
-        connection.crmTab,
-      ];
+      const tabs = tabNames(connection);
 
       const results = await Promise.all(
         tabs.map(async (tab): Promise<TabStatus> => {

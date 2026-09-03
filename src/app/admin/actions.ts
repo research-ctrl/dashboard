@@ -153,6 +153,7 @@ export async function saveConnection(
       projectsTab: String(formData.get("projectsTab") ?? "Live Projects"),
       pipelineTab: String(formData.get("pipelineTab") ?? "Pipeline"),
       opexTab: String(formData.get("opexTab") ?? "Opex"),
+      liabilitiesTab: String(formData.get("liabilitiesTab") ?? "Liabilities"),
       crmTab: String(formData.get("crmTab") ?? "CRM Collection"),
       crmYear: Number.isFinite(crmYear) && crmYear > 0 ? crmYear : 2026,
     },

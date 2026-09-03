@@ -51,6 +51,14 @@ PIPELINE_HEADERS = [
     ("Status (Lincoln)", 22, None),
 ]
 
+# No owner brackets: the lenders sheet is maintained jointly, and an owner
+# here would put the wrong name on every entry in the dashboard's update strip.
+LIABILITY_HEADERS = [
+    ("Lender", 26, None),
+    ("Loan amount", 18, MONEY),
+    ("Outstanding", 18, MONEY),
+]
+
 OPEX_HEADERS = [
     ("Opex", 22, None),
     ("Amount opex (Lincoln)", 16, MONEY),
@@ -305,6 +313,10 @@ def build(chapter):
     write_rows(wb.create_sheet("Pipeline"), PIPELINE_HEADERS,
                chapter["pipeline"], chapter)
     build_opex(wb.create_sheet("Opex"), chapter)
+    # Headers only - the lenders are filled in by hand, and inventing seed rows
+    # here would put fictional debts on the board.
+    write_rows(wb.create_sheet("Liabilities"), LIABILITY_HEADERS,
+               chapter.get("liabilities", []), chapter)
     build_crm(wb.create_sheet("CRM Collection"), chapter)
 
     OUT.mkdir(parents=True, exist_ok=True)

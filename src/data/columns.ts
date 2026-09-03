@@ -44,6 +44,17 @@ export const opexColumns = {
   allocated: { label: "Allocated amount + extra", owner: "" },
 } satisfies Record<string, Column>;
 
+/**
+ * No owners in brackets, because the sheet's headers carry none. Edits here
+ * are logged against the tab with a blank name — add "(Lincoln)" to a header
+ * in the sheet and the update strip starts naming them, no code change.
+ */
+export const liabilityColumns = {
+  lender: { label: "Lender", owner: "" },
+  loanAmount: { label: "Loan amount", owner: "" },
+  outstanding: { label: "Outstanding", owner: "" },
+} satisfies Record<string, Column>;
+
 export const crmColumns = {
   month: { label: "Month", owner: "Lendl" },
 } satisfies Record<string, Column>;

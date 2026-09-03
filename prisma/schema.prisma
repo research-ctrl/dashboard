@@ -17,7 +17,7 @@ model AdminUser {
   @@map("admin_users")
 }
 
-/// One Google Sheet per chapter, four tabs inside it.
+/// One Google Sheet per chapter, five tabs inside it.
 model ChapterConnection {
   id            String   @id
   name          String
@@ -25,6 +25,8 @@ model ChapterConnection {
   projectsTab   String   @default("Live Projects")
   pipelineTab   String   @default("Pipeline")
   opexTab       String   @default("Opex")
+  /// The sheet is called Liabilities; the board heads the table "Total Debts".
+  liabilitiesTab String  @default("Liabilities")
   crmTab        String   @default("CRM Collection")
   crmYear       Int      @default(2026)
   enabled       Boolean  @default(true)

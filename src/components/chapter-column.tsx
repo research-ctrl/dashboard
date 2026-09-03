@@ -27,16 +27,16 @@ export function ChapterColumn({ chapter }: { chapter: LoadedChapter }) {
         <div className={`mt-3 h-1 w-full rounded-full ${accent.rule}`} />
       </div>
 
-      {chapter.tables.map(({ tab, result }) => (
+      {chapter.tables.map(({ tab, title, result }) => (
         <div key={tab}>
-          <h3 className={tableTitle}>{tab}</h3>
+          <h3 className={tableTitle}>{title}</h3>
 
           {result.ok ? (
             <SheetTable table={result.table} accent={accent} />
           ) : (
             /* Never quietly substitute other data — say what failed. */
             <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
-              Could not read this tab — {result.problem}
+              Could not read the “{tab}” tab — {result.problem}
             </p>
           )}
         </div>

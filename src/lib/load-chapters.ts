@@ -1,11 +1,14 @@
 import { chapters as chapterMeta } from "@/data/chapters";
+import { tabSlots } from "@/data/tabs";
 import type { ChapterMeta } from "@/data/types";
 import { prisma } from "@/lib/prisma";
 import { readTable, type ReadResult } from "@/lib/sheets";
 
 export type LoadedTable = {
-  /** The tab name in the workbook, shown as the table's heading. */
+  /** The tab name in the workbook — what was actually read. */
   tab: string;
+  /** The heading shown on the board. Same as `tab` except for Total Debts. */
+  title: string;
   result: ReadResult;
 };
 
@@ -40,18 +43,16 @@ export async function loadChapters(): Promise<LoadedChapter[]> {
       const connection = byId.get(chapter.id);
       const spreadsheetId = connection?.spreadsheetId ?? "";
 
-      const tabs = [
-        connection?.projectsTab ?? "Live Projects",
-        connection?.pipelineTab ?? "Pipeline",
-        connection?.opexTab ?? "Opex",
-        connection?.crmTab ?? "CRM Collection",
-      ];
-
       const tables = await Promise.all(
-        tabs.map(async (tab) => ({
-          tab,
-          result: await readTable(spreadsheetId, tab),
-        })),
+        tabSlots.map(async (slot): Promise<LoadedTable> => {
+          const tab = connection?.[slot.field] ?? slot.fallback;
+
+          return {
+            tab,
+            title: slot.title,
+            result: await readTable(spreadsheetId, tab),
+          };
+        }),
       );
 
       return { ...chapter, spreadsheetId, tables };

@@ -1,6 +1,7 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { tabNames } from "@/data/tabs";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -59,14 +60,11 @@ async function recordEdit(request: NextRequest) {
   });
   if (!connection) return null;
 
-  // Only the four data tabs are worth logging. The Chapter legend tab holds
+  // Only the configured data tabs are worth logging. The Chapter legend tab holds
   // settings, not figures, and edits there are noise.
-  const dataTabs = [
-    connection.projectsTab,
-    connection.pipelineTab,
-    connection.opexTab,
-    connection.crmTab,
-  ].map((name) => name.trim().toLowerCase());
+  const dataTabs = tabNames(connection).map((name) =>
+    name.trim().toLowerCase(),
+  );
 
   if (!dataTabs.includes(tab.toLowerCase())) return null;
 

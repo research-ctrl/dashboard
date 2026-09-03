@@ -10,6 +10,8 @@
  * board can never show a row the sheet no longer has — reads follow page
  * loads, and page loads follow the Realtime push, so an idle board is free.
  */
+import { cache } from "react";
+
 export const SHEET_TAG = "sheets";
 
 /** Internal join key we add to the workbooks; never worth showing. */
@@ -88,6 +90,39 @@ function isTotalRow(row: string[]) {
   return hasValues && (first === "" || first === "total");
 }
 
+/**
+ * gviz has no way of saying "no such tab". Asked for a name the workbook does
+ * not have, it answers 200 with status "ok" and the contents of the FIRST
+ * sheet — in CSV and in JSON alike. Rendering that is how the Chapter legend
+ * tab ends up on the board under someone else's heading.
+ *
+ * So ask each workbook once for a name that cannot exist. Whatever comes back
+ * is that workbook's fallback body, and any tab answering with the same bytes
+ * was not found. Memoised for the render, so it costs one request per
+ * workbook rather than one per tab.
+ *
+ * The one thing this cannot distinguish is a tab that genuinely is the first
+ * sheet — it would be reported missing. In these workbooks the first sheet is
+ * always the Chapter legend, which is never one of the configured data tabs.
+ */
+const IMPOSSIBLE_TAB = "__bb_no_such_tab__";
+
+const readFallbackBody = cache(
+  async (spreadsheetId: string): Promise<string | null> => {
+    try {
+      const response = await fetch(csvUrl(spreadsheetId, IMPOSSIBLE_TAB), {
+        cache: "no-store",
+        next: { tags: [SHEET_TAG] },
+      });
+
+      return response.ok ? await response.text() : null;
+    } catch {
+      // Without a fallback body the check simply does not run.
+      return null;
+    }
+  },
+);
+
 export type ReadResult =
   | { ok: true; table: SheetTable }
   | { ok: false; problem: string };
@@ -99,14 +134,25 @@ export async function readTable(
   if (!spreadsheetId) return { ok: false, problem: "no sheet linked" };
 
   try {
-    const response = await fetch(csvUrl(spreadsheetId, tab), {
-      cache: "no-store",
-      next: { tags: [SHEET_TAG] },
-    });
+    const [response, fallback] = await Promise.all([
+      fetch(csvUrl(spreadsheetId, tab), {
+        cache: "no-store",
+        next: { tags: [SHEET_TAG] },
+      }),
+      readFallbackBody(spreadsheetId),
+    ]);
 
     if (!response.ok) return { ok: false, problem: `HTTP ${response.status}` };
 
     const text = await response.text();
+
+    // Byte-identical to what a nonexistent tab returns, so this tab is absent.
+    if (fallback !== null && fallback === text) {
+      return {
+        ok: false,
+        problem: `there is no tab named "${tab}" — check the spelling, and that the tab is not hidden`,
+      };
+    }
 
     // A sheet that is not link-shared answers with a sign-in HTML page.
     if (text.trimStart().startsWith("<")) {

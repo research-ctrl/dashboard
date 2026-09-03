@@ -6,10 +6,12 @@ import { saveConnection, type ActionState } from "@/app/admin/actions";
 import {
   crmColumns,
   header,
+  liabilityColumns,
   opexColumns,
   pipelineColumns,
   projectColumns,
 } from "@/data/columns";
+import { tabSlots } from "@/data/tabs";
 import { ACCENTS, type AccentName } from "@/lib/accents";
 
 export type ConnectionRow = {
@@ -19,6 +21,7 @@ export type ConnectionRow = {
   projectsTab: string;
   pipelineTab: string;
   opexTab: string;
+  liabilitiesTab: string;
   crmTab: string;
   crmYear: number;
 };
@@ -29,28 +32,20 @@ const ACCENT_BY_CHAPTER: Record<string, AccentName> = {
   portugal: "indigo",
 };
 
-const TABS = [
-  {
-    name: "projectsTab" as const,
-    title: "Live Projects",
-    columns: Object.values(projectColumns).map(header),
-  },
-  {
-    name: "pipelineTab" as const,
-    title: "Pipeline",
-    columns: Object.values(pipelineColumns).map(header),
-  },
-  {
-    name: "opexTab" as const,
-    title: "Opex",
-    columns: Object.values(opexColumns).map(header),
-  },
-  {
-    name: "crmTab" as const,
-    title: "CRM Collection",
-    columns: [header(crmColumns.month), "…then one column per project"],
-  },
-];
+/** The headers each tab is expected to hold, shown as a hint under its field. */
+const EXPECTED: Record<(typeof tabSlots)[number]["field"], string[]> = {
+  projectsTab: Object.values(projectColumns).map(header),
+  pipelineTab: Object.values(pipelineColumns).map(header),
+  opexTab: Object.values(opexColumns).map(header),
+  liabilitiesTab: Object.values(liabilityColumns).map(header),
+  crmTab: [header(crmColumns.month), "…then one column per project"],
+};
+
+const TABS = tabSlots.map((slot) => ({
+  name: slot.field,
+  title: slot.title,
+  columns: EXPECTED[slot.field],
+}));
 
 const field =
   "w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-xs text-neutral-900 outline-none focus:border-neutral-500";

@@ -72,7 +72,7 @@ export default async function AdminPage() {
         </div>
 
         <p className="mt-3 max-w-2xl text-xs leading-relaxed text-neutral-600">
-          One Google Sheet per chapter, four tabs inside it. Each sheet must be
+          One Google Sheet per chapter, five tabs inside it. Each sheet must be
           shared as Anyone with the link. Saved to Supabase, so every admin sees
           the same values.
         </p>
