@@ -13,6 +13,17 @@ export type LastEdit = {
 /** Height of the strip. The board reserves this much space beneath itself. */
 export const TICKER_HEIGHT = 28;
 
+/**
+ * How many times the content is repeated across the track.
+ *
+ * The track shifts by exactly one copy per cycle, so the visible window is
+ * only ever gap-free while (COPIES - 1) copies are wider than the screen.
+ * Two copies and two short updates leaves a blank stretch on a wide monitor,
+ * which reads as the strip stalling. Eleven spare copies covers a 2560px
+ * display even with a single short entry, and costs a few spans.
+ */
+const COPIES = 12;
+
 export async function readLastEdits(): Promise<LastEdit[]> {
   try {
     return await prisma.sheetEdit.findMany();
@@ -64,13 +75,14 @@ const css = `
   display: flex;
   width: max-content;
   will-change: transform;
-  animation: bb-ticker-scroll 45s linear infinite;
+  animation: bb-ticker-scroll 20s linear infinite;
 }
 
-/* Two identical copies sit side by side, so shifting the track by exactly one
-   copy width and starting over is seamless - there is no jump to hide. */
+/* Identical copies sit side by side, so shifting the track by exactly one
+   copy width and starting over is seamless - there is no jump to hide.
+   ${100 / COPIES}% of the track is precisely one copy. */
 @keyframes bb-ticker-scroll {
-  from { transform: translateX(-50%); }
+  from { transform: translateX(-${100 / COPIES}%); }
   to   { transform: translateX(0); }
 }
 
@@ -152,11 +164,17 @@ export function LastEdits({ edits }: { edits: LastEdit[] }) {
 
       <div className="bb-ticker" aria-label="Last sheet updates">
         <div className="bb-ticker-track">
-          {group}
-          {/* Duplicate purely to make the loop seamless; not read aloud. */}
-          <div aria-hidden="true" style={{ display: "flex" }}>
-            {group}
-          </div>
+          {Array.from({ length: COPIES }, (_, copy) => (
+            <div
+              key={copy}
+              style={{ display: "flex" }}
+              /* Only the first copy is real content; the rest are padding
+                 for the loop and must not be read out twice. */
+              aria-hidden={copy > 0 ? "true" : undefined}
+            >
+              {group}
+            </div>
+          ))}
         </div>
       </div>
     </>
