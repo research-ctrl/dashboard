@@ -141,11 +141,12 @@ export default async function AdminPage() {
               Last webhook received
             </h2>
             <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">
-              Exactly what the Apps Script last sent. No{" "}
-              <code className="text-neutral-900">tab</code> or{" "}
-              <code className="text-neutral-900">column</code> here means the
-              sheet is running an older copy of the script, so the edit could
-              not be attributed to anyone.
+              Exactly what the Apps Script last sent.{" "}
+              <code className="text-neutral-900">scriptVersion</code> missing or
+              below 4 means that sheet is running an outdated copy — re-paste
+              it. <code className="text-neutral-900">trigger: &quot;change&quot;</code>{" "}
+              means the edit arrived without before/after values, which Sheets
+              only supplies on a single-cell edit.
             </p>
             <pre className="mt-2 overflow-x-auto rounded-md bg-neutral-50 p-2 text-[11px] text-neutral-700">
               {JSON.stringify(JSON.parse(lastWebhook.value), null, 2)}

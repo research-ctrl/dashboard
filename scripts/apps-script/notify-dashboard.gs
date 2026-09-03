@@ -22,6 +22,9 @@ const WEBHOOK_SECRET = 'PASTE-THE-SAME-SECRET-HERE';
  */
 const VERCEL_BYPASS_TOKEN = 'PASTE-THE-VERCEL-BYPASS-TOKEN-HERE';
 
+/** Bump when this file changes, so /admin can show which copy is installed. */
+const SCRIPT_VERSION = '4';
+
 function buildUrl_(params) {
   var query = [];
   for (var key in params) {
@@ -63,7 +66,11 @@ function notifyDashboard(event) {
   var params = {
     secret: WEBHOOK_SECRET,
     spreadsheetId: spreadsheet.getId(),
-    source: spreadsheet.getName()
+    source: spreadsheet.getName(),
+    // Shown in /admin. Without it there is no way to tell an outdated copy of
+    // this script from a trigger that simply carried no cell.
+    scriptVersion: SCRIPT_VERSION,
+    trigger: event && event.range ? 'edit' : 'change'
   };
 
   // onEdit hands us the exact cell. onChange (added or deleted rows) does
@@ -93,15 +100,28 @@ function notifyDashboard(event) {
     params.firstColumn = sheet.getRange(1, 1).getDisplayValue();
 
     // Names the row the edit landed on, e.g. the project or the opex line.
+    // onChange has no range, so use the active cell's row there.
+    var row = 0;
     if (event && event.range) {
-      params.row = sheet.getRange(event.range.getRow(), 1).getDisplayValue();
+      row = event.range.getRow();
+    } else if (sheet.getActiveCell()) {
+      row = sheet.getActiveCell().getRow();
+    }
 
-      // oldValue and value are only supplied for a single cell. A paste spans
-      // a range, and Sheets gives no before-state for it.
-      if (event.range.getNumRows() === 1 && event.range.getNumColumns() === 1) {
-        params.oldValue = event.oldValue === undefined ? '' : String(event.oldValue);
-        params.newValue = event.value === undefined ? '' : String(event.value);
-      }
+    if (row >= 1) {
+      params.row = sheet.getRange(row, 1).getDisplayValue();
+    }
+
+    // oldValue and value are only supplied for a single cell on onEdit. A
+    // paste spans a range, and Sheets gives no before-state for it at all.
+    if (
+      event &&
+      event.range &&
+      event.range.getNumRows() === 1 &&
+      event.range.getNumColumns() === 1
+    ) {
+      params.oldValue = event.oldValue === undefined ? '' : String(event.oldValue);
+      params.newValue = event.value === undefined ? '' : String(event.value);
     }
   }
 
