@@ -162,6 +162,21 @@ export async function saveConnection(
   return {};
 }
 
+/**
+ * Nudge every open board.
+ *
+ * Removing entries only changed the database, so a board already on screen
+ * kept showing what had just been deleted until someone refreshed it. Bumping
+ * sync_state pushes through Supabase Realtime, exactly as a sheet edit does.
+ */
+async function pushToOpenBoards(source: string) {
+  await prisma.syncState.upsert({
+    where: { id: "global" },
+    update: { version: { increment: 1 }, source },
+    create: { id: "global", version: 1, source },
+  });
+}
+
 /** Remove a single log entry — e.g. a test edit that is not worth keeping. */
 export async function deleteSheetEdit(
   _previous: ActionState,
@@ -173,6 +188,7 @@ export async function deleteSheetEdit(
   if (!id) return { error: "Missing entry id." };
 
   await prisma.sheetEdit.delete({ where: { id } });
+  await pushToOpenBoards("log entry deleted");
 
   revalidatePath("/admin");
   revalidatePath("/");
@@ -191,6 +207,7 @@ export async function clearSheetEdits(
   await prisma.sheetEdit.deleteMany(
     chapterId ? { where: { chapterId } } : undefined,
   );
+  await pushToOpenBoards("log cleared");
 
   revalidatePath("/admin");
   revalidatePath("/");
