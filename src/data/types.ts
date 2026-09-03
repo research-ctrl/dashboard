@@ -10,4 +10,6 @@ export type ChapterMeta = {
   accent: AccentName;
   timeZone: string;
   timeZoneLabel: string;
+  /** Short zone abbreviation shown beside a timestamp, e.g. IST. */
+  timeAbbreviation: string;
 };

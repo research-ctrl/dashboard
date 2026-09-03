@@ -5,5 +5,6 @@ export const goa: ChapterMeta = {
   name: "Goa Chapter",
   accent: "amber",
   timeZone: "Asia/Kolkata",
+  timeAbbreviation: "IST",
   timeZoneLabel: "Goa, India",
 };

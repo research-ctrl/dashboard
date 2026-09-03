@@ -7,14 +7,53 @@ export const dynamic = "force-dynamic";
 
 /**
  * Called by the Apps Script bound to each Google Sheet whenever an editor
- * saves. Two things happen:
+ * saves. Three things happen:
  *
- *  1. revalidateTag("sheets") drops the cached CSV, so the next render reads
- *     the sheet again. Without this the board would serve stale rows.
+ *  1. revalidateTag("sheets") drops any cached read.
  *  2. sync_state is bumped. Every open dashboard is subscribed to that row
- *     through Supabase Realtime, so they refresh themselves within a second
- *     — no browser ever polls.
+ *     through Supabase Realtime, so they refresh within a second — no browser
+ *     ever polls.
+ *  3. If the script sent cell details, the edit is recorded against its
+ *     chapter so the board can show what changed and who owns it.
+ *
+ * Every parameter except `secret` is optional, so an older copy of the Apps
+ * Script keeps working exactly as before.
  */
+
+/** "Amount opex (Lincoln)" -> "Lincoln". Empty when the header has no owner. */
+function ownerFromHeader(header: string) {
+  const match = header.match(/\(([^)]*)\)\s*$/);
+  return match ? match[1].trim() : "";
+}
+
+async function recordEdit(request: NextRequest) {
+  const params = request.nextUrl.searchParams;
+
+  const spreadsheetId = params.get("spreadsheetId")?.trim();
+  const tab = params.get("tab")?.trim();
+  if (!spreadsheetId || !tab) return null;
+
+  const column = params.get("column")?.trim() ?? "";
+  const firstColumn = params.get("firstColumn")?.trim() ?? "";
+
+  // The edited column names its owner; if it has none — CRM's project columns
+  // are bare names — fall back to whoever owns the tab's first column.
+  const owner = ownerFromHeader(column) || ownerFromHeader(firstColumn);
+
+  const connection = await prisma.chapterConnection.findFirst({
+    where: { spreadsheetId },
+  });
+  if (!connection) return null;
+
+  await prisma.sheetEdit.upsert({
+    where: { chapterId: connection.id },
+    update: { tab, column, owner },
+    create: { chapterId: connection.id, tab, column, owner },
+  });
+
+  return { chapter: connection.id, tab, column, owner };
+}
+
 async function handle(request: NextRequest) {
   const secret = process.env.SHEETS_WEBHOOK_SECRET;
 
@@ -40,7 +79,11 @@ async function handle(request: NextRequest) {
   revalidateTag("sheets", { expire: 0 });
 
   let version = 0;
+  let edit: Awaited<ReturnType<typeof recordEdit>> = null;
+
   try {
+    edit = await recordEdit(request);
+
     const row = await prisma.syncState.upsert({
       where: { id: "global" },
       update: { version: { increment: 1 }, source },
@@ -52,13 +95,19 @@ async function handle(request: NextRequest) {
       {
         revalidated: true,
         pushed: false,
-        error: cause instanceof Error ? cause.message : "sync_state update failed",
+        error: cause instanceof Error ? cause.message : "database write failed",
       },
       { status: 200 },
     );
   }
 
-  return NextResponse.json({ revalidated: true, pushed: true, version, source });
+  return NextResponse.json({
+    revalidated: true,
+    pushed: true,
+    version,
+    source,
+    edit,
+  });
 }
 
 export async function POST(request: NextRequest) {

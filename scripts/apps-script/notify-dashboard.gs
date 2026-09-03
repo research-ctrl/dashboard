@@ -1,14 +1,13 @@
 /**
  * Paste this into each chapter's Google Sheet:
- *   Extensions -> Apps Script -> replace Code.gs with this file
+ *   Extensions -> Apps Script -> replace everything in Code.gs with this file
  *
- * Then fill in the three constants below, click Run once on installTrigger(),
- * and approve the permission prompt. From then on every save in the sheet
- * pings the dashboard, which drops its cache and pushes the new rows to
- * every open browser.
+ * Fill in the two constants below, save, run testWebhook() once and check the
+ * log says OK, then run installTrigger() once and approve the prompt.
  *
- * This is what makes the board live without any polling: nothing is
- * requested until an editor actually changes something.
+ * From then on every save pings the dashboard, which drops its cache, pushes
+ * the change to every open browser, and records which column was touched so
+ * the board can show who last updated what.
  */
 
 // The deployed app, e.g. https://dashboard-xyz.vercel.app
@@ -18,110 +17,135 @@ const WEBHOOK_URL = 'https://YOUR-APP.vercel.app/api/sheets/changed';
 const WEBHOOK_SECRET = 'PASTE-THE-SAME-SECRET-HERE';
 
 /**
- * Vercel Deployment Protection keeps the board behind SSO. Google's servers
- * cannot log in, so without this token the webhook receives the Vercel login
- * page instead of the route and the board silently stops updating.
- *
- * Generate it at:
- *   Vercel -> Project -> Settings -> Deployment Protection
- *          -> Protection Bypass for Automation -> Add Secret
+ * Only needed if Vercel Deployment Protection is turned back on. While it is
+ * off, leave this as it is — it is ignored.
  */
 const VERCEL_BYPASS_TOKEN = 'PASTE-THE-VERCEL-BYPASS-TOKEN-HERE';
 
-function buildRequest_(source) {
-  const url =
-    WEBHOOK_URL +
-    '?secret=' + encodeURIComponent(WEBHOOK_SECRET) +
-    '&source=' + encodeURIComponent(source);
+function buildUrl_(params) {
+  var query = [];
+  for (var key in params) {
+    if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      query.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+    }
+  }
+  return WEBHOOK_URL + '?' + query.join('&');
+}
 
-  const headers = {};
+function requestOptions_() {
+  var headers = {};
   if (VERCEL_BYPASS_TOKEN && VERCEL_BYPASS_TOKEN.indexOf('PASTE') !== 0) {
     headers['x-vercel-protection-bypass'] = VERCEL_BYPASS_TOKEN;
   }
 
   return {
-    url: url,
-    options: {
-      method: 'post',
-      headers: headers,
-      muteHttpExceptions: true,
-      // Do not chase a redirect. A 302 here means the bypass token is missing
-      // or wrong; following it would land on Vercel's login page, return 200,
-      // and hide the failure.
-      followRedirects: false,
-    },
+    method: 'post',
+    headers: headers,
+    muteHttpExceptions: true,
+    // Do not chase a redirect. A 302 means Deployment Protection blocked it;
+    // following it would return 200 from a login page and hide the failure.
+    followRedirects: false
   };
 }
 
-function notifyDashboard() {
-  const name = SpreadsheetApp.getActiveSpreadsheet().getName();
-  const request = buildRequest_(name);
+/**
+ * Runs on every edit. `event` is supplied by the trigger and tells us the
+ * exact cell, so we can send the column header the edit landed in.
+ *
+ * The dashboard reads the person's name out of that header — "Amount opex
+ * (Lincoln)" — rather than from the Google account, which is often empty and
+ * would name the sheet's owner rather than whoever owns the column.
+ */
+function notifyDashboard(event) {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 
-  const response = UrlFetchApp.fetch(request.url, request.options);
-  const code = response.getResponseCode();
+  var params = {
+    secret: WEBHOOK_SECRET,
+    spreadsheetId: spreadsheet.getId(),
+    source: spreadsheet.getName()
+  };
+
+  if (event && event.range) {
+    var sheet = event.range.getSheet();
+    params.tab = sheet.getName();
+
+    var column = event.range.getColumn();
+    if (column <= sheet.getLastColumn()) {
+      params.column = sheet.getRange(1, column).getDisplayValue();
+    }
+
+    // Sent so the dashboard can fall back to the tab's owner when the edited
+    // column has no name in brackets — CRM project columns, for instance.
+    params.firstColumn = sheet.getRange(1, 1).getDisplayValue();
+  }
+
+  var response = UrlFetchApp.fetch(buildUrl_(params), requestOptions_());
+  var code = response.getResponseCode();
 
   if (code === 200) return;
 
-  if (code === 302 || code === 401) {
-    Logger.log(
-      'Dashboard NOT updated (HTTP ' + code + '). ' +
-      'A 302 means Deployment Protection blocked it - check VERCEL_BYPASS_TOKEN. ' +
-      'A 401 means WEBHOOK_SECRET does not match Vercel.'
-    );
+  if (code === 302) {
+    Logger.log('Dashboard NOT updated (302). Deployment Protection blocked it — turn it off, or set VERCEL_BYPASS_TOKEN.');
+  } else if (code === 401) {
+    Logger.log('Dashboard NOT updated (401). WEBHOOK_SECRET does not match Vercel.');
   } else {
-    Logger.log(
-      'Dashboard NOT updated. HTTP ' + code + ' ' +
-      response.getContentText().slice(0, 200)
-    );
+    Logger.log('Dashboard NOT updated. HTTP ' + code + ' ' + response.getContentText().slice(0, 200));
   }
 }
 
-/** Run this once, by hand, to install the triggers. */
+/**
+ * Run this FIRST, by hand, and read the log. It sends a pretend edit so you
+ * can see the whole path work before relying on the triggers.
+ */
+function testWebhook() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getSheets()[0];
+
+  var params = {
+    secret: WEBHOOK_SECRET,
+    spreadsheetId: spreadsheet.getId(),
+    source: spreadsheet.getName(),
+    tab: sheet.getName(),
+    column: sheet.getRange(1, 1).getDisplayValue(),
+    firstColumn: sheet.getRange(1, 1).getDisplayValue()
+  };
+
+  var response = UrlFetchApp.fetch(buildUrl_(params), requestOptions_());
+  var code = response.getResponseCode();
+  var body = response.getContentText();
+
+  if (code === 200) {
+    Logger.log('OK — dashboard notified. ' + body);
+  } else if (code === 302) {
+    Logger.log('BLOCKED by Vercel Deployment Protection (302). Turn it off in Vercel, or set VERCEL_BYPASS_TOKEN.');
+  } else if (code === 401) {
+    Logger.log('REJECTED (401). WEBHOOK_SECRET does not match SHEETS_WEBHOOK_SECRET in Vercel.');
+  } else {
+    Logger.log('Unexpected HTTP ' + code + ' ' + body.slice(0, 300));
+  }
+}
+
+/** Run this SECOND, once testWebhook says OK. */
 function installTrigger() {
-  const sheet = SpreadsheetApp.getActive();
+  var spreadsheet = SpreadsheetApp.getActive();
 
   // Clear old triggers so running this twice does not double up.
   ScriptApp.getProjectTriggers().forEach(function (trigger) {
     ScriptApp.deleteTrigger(trigger);
   });
 
-  // onChange covers added rows, deleted rows and structural edits.
+  // onEdit carries the edited cell, which is what names the column and owner.
   ScriptApp.newTrigger('notifyDashboard')
-    .forSpreadsheet(sheet)
-    .onChange()
-    .create();
-
-  // onEdit covers ordinary cell edits.
-  ScriptApp.newTrigger('notifyDashboard')
-    .forSpreadsheet(sheet)
+    .forSpreadsheet(spreadsheet)
     .onEdit()
     .create();
 
-  Logger.log('Triggers installed for ' + sheet.getName());
-}
+  // onChange catches added and deleted rows. It carries no cell reference, so
+  // those refresh the board without naming a column.
+  ScriptApp.newTrigger('notifyDashboard')
+    .forSpreadsheet(spreadsheet)
+    .onChange()
+    .create();
 
-/**
- * Run this before relying on the triggers. It prints exactly what went wrong
- * rather than failing quietly in the background.
- */
-function testWebhook() {
-  const request = buildRequest_('test');
-  const response = UrlFetchApp.fetch(request.url, request.options);
-  const code = response.getResponseCode();
-  const body = response.getContentText();
-
-  if (code === 200) {
-    Logger.log('OK - dashboard notified. ' + body);
-  } else if (code === 302) {
-    Logger.log(
-      'BLOCKED by Vercel Deployment Protection (302). ' +
-      'Set VERCEL_BYPASS_TOKEN to the Protection Bypass for Automation secret.'
-    );
-  } else if (code === 401) {
-    Logger.log(
-      'REJECTED (401). WEBHOOK_SECRET does not match SHEETS_WEBHOOK_SECRET in Vercel.'
-    );
-  } else {
-    Logger.log('Unexpected HTTP ' + code + ' ' + body.slice(0, 300));
-  }
+  Logger.log('Triggers installed for ' + spreadsheet.getName());
 }

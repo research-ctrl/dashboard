@@ -5,5 +5,6 @@ export const portugal: ChapterMeta = {
   name: "Portugal Chapter",
   accent: "indigo",
   timeZone: "Europe/Lisbon",
+  timeAbbreviation: "PT",
   timeZoneLabel: "Portugal",
 };
