@@ -15,6 +15,9 @@ export type LogEntry = {
   tab: string;
   column: string;
   owner: string;
+  rowLabel: string;
+  oldValue: string;
+  newValue: string;
   /** Pre-formatted on the server, in the chapter's own time zone. */
   stamp: string;
 };
@@ -97,8 +100,21 @@ export function EditLog({ entries }: { entries: LogEntry[] }) {
                 )}{" "}
                 <span className="text-neutral-500">
                   {entry.tab}
+                  {entry.rowLabel ? ` · ${entry.rowLabel}` : ""}
                   {entry.column ? ` · ${entry.column}` : ""}
                 </span>
+                {(entry.oldValue || entry.newValue) && (
+                  <>
+                    {" "}
+                    <span className="text-rose-700 line-through">
+                      {entry.oldValue || "blank"}
+                    </span>
+                    <span className="text-neutral-400"> → </span>
+                    <span className="text-emerald-700">
+                      {entry.newValue || "blank"}
+                    </span>
+                  </>
+                )}
               </span>
               <DeleteButton id={entry.id} />
             </li>

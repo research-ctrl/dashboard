@@ -35,6 +35,11 @@ async function recordEdit(request: NextRequest) {
 
   const column = params.get("column")?.trim() ?? "";
   const firstColumn = params.get("firstColumn")?.trim() ?? "";
+  const rowLabel = params.get("row")?.trim() ?? "";
+
+  // Not trimmed: leading and trailing spaces are part of what changed.
+  const oldValue = params.get("oldValue") ?? "";
+  const newValue = params.get("newValue") ?? "";
 
   // The edited column names its owner; if it has none — CRM's project columns
   // are bare names — fall back to whoever owns the tab's first column.
@@ -60,8 +65,17 @@ async function recordEdit(request: NextRequest) {
     return { chapter: connection.id, tab, column, owner, deduplicated: true };
   }
 
+
   await prisma.sheetEdit.create({
-    data: { chapterId: connection.id, tab, column, owner },
+    data: {
+      chapterId: connection.id,
+      tab,
+      column,
+      owner,
+      rowLabel,
+      oldValue,
+      newValue,
+    },
   });
 
   // Keep the newest 100 per chapter so an append-only log cannot grow without
@@ -79,7 +93,7 @@ async function recordEdit(request: NextRequest) {
     });
   }
 
-  return { chapter: connection.id, tab, column, owner };
+  return { chapter: connection.id, tab, column, owner, rowLabel, oldValue, newValue };
 }
 
 async function handle(request: NextRequest) {

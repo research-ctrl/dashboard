@@ -47,6 +47,9 @@ export default async function AdminPage() {
       tab: edit.tab,
       column: edit.column,
       owner: edit.owner,
+      rowLabel: edit.rowLabel,
+      oldValue: edit.oldValue,
+      newValue: edit.newValue,
       stamp: `${stamp} ${chapter?.timeAbbreviation ?? "UTC"}`,
     };
   });

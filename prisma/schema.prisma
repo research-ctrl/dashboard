@@ -66,6 +66,11 @@ model SheetEdit {
   tab       String
   column    String
   owner     String
+  /// The row's first cell, e.g. the project name the edit happened on.
+  rowLabel  String   @default("")
+  /// Only present for single-cell edits; a paste spans too many cells to name.
+  oldValue  String   @default("")
+  newValue  String   @default("")
   editedAt  DateTime @default(now())
 
   @@index([chapterId, editedAt])

@@ -25,7 +25,8 @@ const VERCEL_BYPASS_TOKEN = 'PASTE-THE-VERCEL-BYPASS-TOKEN-HERE';
 function buildUrl_(params) {
   var query = [];
   for (var key in params) {
-    if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+    // Empty strings matter - a cleared cell has an empty new value.
+    if (params[key] !== null && params[key] !== undefined) {
       query.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
     }
   }
@@ -90,6 +91,18 @@ function notifyDashboard(event) {
     // Lets the dashboard fall back to the tab's owner when the edited column
     // has no name in brackets — CRM project columns, for instance.
     params.firstColumn = sheet.getRange(1, 1).getDisplayValue();
+
+    // Names the row the edit landed on, e.g. the project or the opex line.
+    if (event && event.range) {
+      params.row = sheet.getRange(event.range.getRow(), 1).getDisplayValue();
+
+      // oldValue and value are only supplied for a single cell. A paste spans
+      // a range, and Sheets gives no before-state for it.
+      if (event.range.getNumRows() === 1 && event.range.getNumColumns() === 1) {
+        params.oldValue = event.oldValue === undefined ? '' : String(event.oldValue);
+        params.newValue = event.value === undefined ? '' : String(event.value);
+      }
+    }
   }
 
   var response = UrlFetchApp.fetch(buildUrl_(params), requestOptions_());

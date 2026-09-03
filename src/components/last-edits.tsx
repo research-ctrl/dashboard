@@ -8,6 +8,9 @@ export type LastEdit = {
   tab: string;
   column: string;
   owner: string;
+  rowLabel: string;
+  oldValue: string;
+  newValue: string;
   editedAt: Date;
 };
 
@@ -120,6 +123,7 @@ const css = `
 
 .bb-ticker-who { color: #171717; font-weight: 500; }
 .bb-ticker-where { color: #737373; }
+.bb-ticker-change { color: #171717; }
 .bb-ticker-when { color: #a3a3a3; font-variant-numeric: tabular-nums; }
 .bb-ticker-sep { color: #d4d4d4; }
 
@@ -158,8 +162,14 @@ export function LastEdits({ edits }: { edits: LastEdit[] }) {
           )}
           <span className="bb-ticker-where">
             {edit.tab}
+            {edit.rowLabel ? ` · ${edit.rowLabel}` : ""}
             {edit.column ? ` · ${edit.column}` : ""}
           </span>
+          {(edit.oldValue || edit.newValue) && (
+            <span className="bb-ticker-change">
+              {edit.oldValue || "blank"} → {edit.newValue || "blank"}
+            </span>
+          )}
           <span className="bb-ticker-when">
             {stamp(edit.editedAt, chapter.timeZone, chapter.timeAbbreviation)}
           </span>
