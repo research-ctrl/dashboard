@@ -56,16 +56,18 @@ model SyncState {
   @@map("sync_state")
 }
 
-/// The most recent edit seen in each chapter's workbook.
-/// One row per chapter, overwritten each time — a log would grow forever and
-/// only the latest is ever shown. `owner` is read from the edited column's
-/// header, not from the Google account, which is often blank.
+/// Append-only log of edits seen in each chapter's workbook.
+/// `owner` is read from the edited column's header, not from the Google
+/// account, which is often blank. Trimmed to the newest 100 per chapter on
+/// write, so it stays bounded without a scheduled job.
 model SheetEdit {
-  chapterId String   @id
+  id        String   @id @default(uuid())
+  chapterId String
   tab       String
   column    String
   owner     String
-  editedAt  DateTime @updatedAt
+  editedAt  DateTime @default(now())
 
+  @@index([chapterId, editedAt])
   @@map("sheet_edits")
 }

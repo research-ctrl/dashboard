@@ -3,6 +3,7 @@ import { ACCENTS } from "@/lib/accents";
 import { prisma } from "@/lib/prisma";
 
 export type LastEdit = {
+  id: string;
   chapterId: string;
   tab: string;
   column: string;
@@ -24,9 +25,19 @@ export const TICKER_HEIGHT = 28;
  */
 const COPIES = 12;
 
+/** The newest entry for each chapter — one query per chapter, and there are two. */
 export async function readLastEdits(): Promise<LastEdit[]> {
   try {
-    return await prisma.sheetEdit.findMany();
+    const latest = await Promise.all(
+      chapters.map((chapter) =>
+        prisma.sheetEdit.findFirst({
+          where: { chapterId: chapter.id },
+          orderBy: { editedAt: "desc" },
+        }),
+      ),
+    );
+
+    return latest.filter((edit): edit is LastEdit => edit !== null);
   } catch {
     // No database reachable — the strip simply does not render.
     return [];

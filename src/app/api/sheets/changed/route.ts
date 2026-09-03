@@ -45,11 +45,24 @@ async function recordEdit(request: NextRequest) {
   });
   if (!connection) return null;
 
-  await prisma.sheetEdit.upsert({
-    where: { chapterId: connection.id },
-    update: { tab, column, owner },
-    create: { chapterId: connection.id, tab, column, owner },
+  await prisma.sheetEdit.create({
+    data: { chapterId: connection.id, tab, column, owner },
   });
+
+  // Keep the newest 100 per chapter so an append-only log cannot grow without
+  // bound, without needing a scheduled job to tidy it.
+  const stale = await prisma.sheetEdit.findMany({
+    where: { chapterId: connection.id },
+    orderBy: { editedAt: "desc" },
+    skip: 100,
+    select: { id: true },
+  });
+
+  if (stale.length > 0) {
+    await prisma.sheetEdit.deleteMany({
+      where: { id: { in: stale.map((row) => row.id) } },
+    });
+  }
 
   return { chapter: connection.id, tab, column, owner };
 }

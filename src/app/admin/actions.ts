@@ -161,3 +161,38 @@ export async function saveConnection(
   revalidatePath("/admin");
   return {};
 }
+
+/** Remove a single log entry — e.g. a test edit that is not worth keeping. */
+export async function deleteSheetEdit(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  if (!(await getAdminUser())) return { error: "Not signed in." };
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { error: "Missing entry id." };
+
+  await prisma.sheetEdit.delete({ where: { id } });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return {};
+}
+
+/** Empty the whole log. The board's strip disappears until the next edit. */
+export async function clearSheetEdits(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  if (!(await getAdminUser())) return { error: "Not signed in." };
+
+  const chapterId = String(formData.get("chapterId") ?? "");
+
+  await prisma.sheetEdit.deleteMany(
+    chapterId ? { where: { chapterId } } : undefined,
+  );
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return {};
+}

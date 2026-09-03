@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/admin/actions";
 import { ConnectionsForm } from "@/components/admin/connections-form";
+import { EditLog, type LogEntry } from "@/components/admin/edit-log";
+import { chapters as chapterMeta } from "@/data/chapters";
 import { getAdminUser, needsSetup } from "@/lib/auth";
 import { readConnectionStatus } from "@/lib/connection-status";
 import { prisma } from "@/lib/prisma";
@@ -17,10 +19,36 @@ export default async function AdminPage() {
   const admin = await getAdminUser();
   if (!admin) redirect("/admin/login");
 
-  const [connections, status] = await Promise.all([
+  const [connections, status, edits] = await Promise.all([
     prisma.chapterConnection.findMany({ orderBy: { createdAt: "asc" } }),
     readConnectionStatus(),
+    prisma.sheetEdit.findMany({ orderBy: { editedAt: "desc" }, take: 60 }),
   ]);
+
+  // Stamped here rather than in the client component, so each entry can use
+  // its own chapter's time zone.
+  const logEntries: LogEntry[] = edits.map((edit) => {
+    const chapter = chapterMeta.find((item) => item.id === edit.chapterId);
+
+    const stamp = new Intl.DateTimeFormat("en-GB", {
+      timeZone: chapter?.timeZone ?? "UTC",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(edit.editedAt);
+
+    return {
+      id: edit.id,
+      chapterId: edit.chapterId,
+      chapterName: chapter?.name.replace(" Chapter", "") ?? edit.chapterId,
+      tab: edit.tab,
+      column: edit.column,
+      owner: edit.owner,
+      stamp: `${stamp} ${chapter?.timeAbbreviation ?? "UTC"}`,
+    };
+  });
 
   return (
     <main className="flex-1 bg-white">
@@ -102,6 +130,8 @@ export default async function AdminPage() {
             ))}
           </div>
         </section>
+
+        <EditLog entries={logEntries} />
 
         <ConnectionsForm connections={connections} />
 
