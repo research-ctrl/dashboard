@@ -33,6 +33,15 @@ async function recordEdit(request: NextRequest) {
   const tab = params.get("tab")?.trim();
   if (!spreadsheetId || !tab) return null;
 
+  /**
+   * onChange fires for structural edits and carries no cell reference. The
+   * script guesses with getActiveSheet(), and that guess is wrong often
+   * enough to have filled the log with rows pointing at the Chapter legend
+   * tab. It still refreshes the board; it just no longer claims to know who
+   * changed what.
+   */
+  if (params.get("trigger") === "change") return null;
+
   const column = params.get("column")?.trim() ?? "";
   const firstColumn = params.get("firstColumn")?.trim() ?? "";
   const rowLabel = params.get("row")?.trim() ?? "";
@@ -49,6 +58,17 @@ async function recordEdit(request: NextRequest) {
     where: { spreadsheetId },
   });
   if (!connection) return null;
+
+  // Only the four data tabs are worth logging. The Chapter legend tab holds
+  // settings, not figures, and edits there are noise.
+  const dataTabs = [
+    connection.projectsTab,
+    connection.pipelineTab,
+    connection.opexTab,
+    connection.crmTab,
+  ].map((name) => name.trim().toLowerCase());
+
+  if (!dataTabs.includes(tab.toLowerCase())) return null;
 
   // One keystroke fires both the onEdit and onChange triggers, and both can
   // now name a cell. Without this the same edit lands twice.
