@@ -62,6 +62,32 @@ async function recordEdit(request: NextRequest) {
   });
 
   if (duplicate) {
+    // onEdit knows the row and the before/after values; onChange knows neither.
+    // They fire in either order for the same keystroke, so upgrade the stored
+    // entry rather than discarding whichever richer one happened to be second.
+    const incomingHasDetail = Boolean(rowLabel || oldValue || newValue);
+    const storedHasDetail = Boolean(
+      duplicate.rowLabel || duplicate.oldValue || duplicate.newValue,
+    );
+
+    if (incomingHasDetail && !storedHasDetail) {
+      await prisma.sheetEdit.update({
+        where: { id: duplicate.id },
+        data: { rowLabel, oldValue, newValue, owner },
+      });
+
+      return {
+        chapter: connection.id,
+        tab,
+        column,
+        owner,
+        rowLabel,
+        oldValue,
+        newValue,
+        upgraded: true,
+      };
+    }
+
     return { chapter: connection.id, tab, column, owner, deduplicated: true };
   }
 
