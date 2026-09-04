@@ -642,6 +642,22 @@
   padding-bottom: calc(var(--bb-ticker-h) * 2);
 }
 
+/* Expanding a chapter narrows the update strip to that chapter's own
+   entries; the normal two-column view keeps showing both.
+
+   :has() rather than the sibling combinator the rules above use, because the
+   strip is not a sibling of the radios - it is rendered before the wrapper the
+   radios sit in, and CSS has no way to reach backwards out of an element. The
+   degradation is the right way round: where :has() is unsupported these rules
+   are dropped and the strip simply shows both, exactly as it did before.
+
+   The marquee is unaffected. All twelve copies shrink together, so one copy is
+   still precisely 1/12 of the track and the loop stays seamless. */
+main:has(#bb-view-goa:checked) .bb-ticker [data-ticker-chapter="portugal"],
+main:has(#bb-view-portugal:checked) .bb-ticker [data-ticker-chapter="goa"] {
+  display: none;
+}
+
 /* --- Print ----------------------------------------------------------------
    The dark values live inside @media screen, so paper already gets the light
    palette with nothing to keep in sync. All that is left is hiding the

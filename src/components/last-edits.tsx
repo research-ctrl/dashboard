@@ -15,12 +15,6 @@ export type LastEdit = {
 };
 
 /**
- * Height of the strip, and the space the board reserves for it, both come from
- * --bb-ticker-h in globals.css. It is fluid, so on a 42" panel the strip is not
- * a 28px sliver with 11px text in it.
- */
-
-/**
  * How many times the content is repeated across the track.
  *
  * The track shifts by exactly one copy per cycle, so the visible window is
@@ -28,6 +22,14 @@ export type LastEdit = {
  * Two copies and two short updates leaves a blank stretch on a wide monitor,
  * which reads as the strip stalling. Eleven spare copies covers a 2560px
  * display even with a single short entry, and costs a few spans.
+ *
+ * That single-entry case is now the common one rather than the edge: expanding
+ * a chapter hides the other chapter's entry. It still holds, and with room to
+ * spare, because the strip's type grows with the viewport — the wider the
+ * screen, the wider each copy is.
+ *
+ * The strip's height, and the space the board reserves beneath itself for it,
+ * both come from --bb-ticker-h in globals.css so the two cannot drift apart.
  */
 const COPIES = 12;
 
@@ -162,7 +164,11 @@ export function LastEdits({ edits }: { edits: LastEdit[] }) {
   const group = (
     <div className="bb-ticker-group">
       {items.map(({ chapter, edit }) => (
-        <span className="bb-ticker-item" key={chapter.id}>
+        <span
+          className="bb-ticker-item"
+          data-ticker-chapter={chapter.id}
+          key={chapter.id}
+        >
           <span
             className={`bb-ticker-label ${ACCENTS[chapter.accent].title}`}
           >
