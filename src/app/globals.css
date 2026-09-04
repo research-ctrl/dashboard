@@ -11,12 +11,13 @@
   --font-mono: var(--font-sans);
   --font-heading: var(--font-sans);
 
-  /* Board palette — see "Board palette" below. Exposing them here is what
-     turns them into utilities: bg-canvas, text-ink, border-line, and so on. */
+  /* Board palette — see "Long Watch" below. Exposing them here is what turns
+     them into utilities: bg-canvas, text-ink, border-line, and so on. */
   --color-canvas: var(--bb-canvas);
   --color-surface: var(--bb-surface);
   --color-surface-alt: var(--bb-surface-alt);
   --color-line: var(--bb-line);
+  --color-line-soft: var(--bb-line-soft);
   --color-line-strong: var(--bb-line-strong);
   --color-ink: var(--bb-ink);
   --color-ink-soft: var(--bb-ink-soft);
@@ -67,225 +68,242 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
 /* ==========================================================================
-   Board palette
+   LONG WATCH
 
-   Every colour the dashboard shows resolves to one of these variables, so a
-   theme swap changes values here and nothing else. Two rules make that hold:
+   The board's palette. Built to be read across a room, all day.
 
-     1. No component may name a literal colour. Not a hex, not a Tailwind
-        palette class (text-neutral-500, bg-amber-50). Those cannot follow a
-        theme, and 153 of them across 14 files is what made dark mode
-        impossible before.
-     2. The accent and badge classes below are plain CSS, not utilities.
-        Tailwind only emits a utility it can find as a whole word in the
-        source, and a stale Turbopack scan silently dropping newly-added
-        classes has cost this project hours more than once. Literal CSS in
-        this file always ships.
+   Three ideas hold it together:
 
-   LIGHT is a faithful port of the colours the board already used — the same
-   neutral and accent ramps, to the hex. Changing how it looks is a separate
-   decision, and this file is where that decision will land.
+     1. The emitting field comes down. The canvas is #e5e3dd — about 80% of
+        white's luminance — and cards sit at #f6f5f1. The full-bleed white
+        plane is gone, but cards still lift off the ground.
+     2. Contrast is re-aimed, not reduced. #171717 on #ffffff measured 17.9:1,
+        and that maximum luminance step at every 10px monospace glyph edge is
+        where halation comes from. Here #1a1917 on #f6f5f1 is 16.1:1 — still
+        AAA, but the step at each edge is smaller because the ground is dimmer,
+        not because the text got weaker.
+     3. Structure moves off the glyphs and onto the surfaces. --bb-line clears
+        3:1 on every ground it touches, where the old #e5e5e5 sat at 1.26:1,
+        so a wide row can be tracked along a rule instead of by chasing text.
+
+   No large fill carries chroma. The only saturated marks on the board are
+   thin rules and small text.
+
+   The two chapters are deliberately matched: Goa 7.93:1 and Portugal 7.95:1,
+   where before indigo (4.58:1) visually swamped amber (2.15:1) and Portugal
+   looked like the more important half.
+
+   TO CHANGE THE PALETTE: edit the values here and nowhere else. Every colour
+   on the board resolves through these; no component names a literal colour.
    ========================================================================== */
 :root {
-  --bb-canvas: #ffffff;
-  --bb-surface: #ffffff;
-  --bb-surface-alt: #fafafa;
-  --bb-line: #e5e5e5;
-  --bb-line-strong: #d4d4d4;
+  /* shadcn's own tokens, aimed at the same palette so the vendored Table and
+     Badge primitives match the board instead of fighting it. */
+  --background: #e5e3dd;
+  --foreground: #1a1917;
+  --card: #f6f5f1;
+  --card-foreground: #1a1917;
+  --popover: #f6f5f1;
+  --popover-foreground: #1a1917;
+  --primary: #1a1917;
+  --primary-foreground: #f6f5f1;
+  --secondary: #e9e8e1;
+  --secondary-foreground: #1a1917;
+  --muted: #e9e8e1;
+  --muted-foreground: #4b4841;
+  --accent: #e9e8e1;
+  --accent-foreground: #1a1917;
+  --destructive: #9e1c26;
+  /* Row rules, via ui/table's border-b. The soft step on purpose: the full
+     --bb-line on all five stacked tables per column reads as a cage. */
+  --border: #d5d1c7;
+  --input: #7a766d;
+  --ring: #6d6960;
+  --radius: 0.625rem;
+  --chart-1: #6e4110;
+  --chart-2: #1c4d80;
+  --chart-3: #135a35;
+  --chart-4: #684e00;
+  --chart-5: #9e1c26;
+  --sidebar: #f6f5f1;
+  --sidebar-foreground: #1a1917;
+  --sidebar-primary: #1a1917;
+  --sidebar-primary-foreground: #f6f5f1;
+  --sidebar-accent: #e9e8e1;
+  --sidebar-accent-foreground: #1a1917;
+  --sidebar-border: #d5d1c7;
+  --sidebar-ring: #6d6960;
 
-  /* Text, darkest to lightest. Every one clears 4.5:1 on --bb-surface. */
-  --bb-ink: #171717;
-  --bb-ink-soft: #262626;
-  --bb-ink-mute: #525252;
-  --bb-ink-dim: #737373;
-  --bb-ink-faint: #8a8a8a;
+  --bb-canvas: #e5e3dd;
+  --bb-surface: #f6f5f1;
+  /* Zebra rows. Darker than the card, so a longer table emits less, not more. */
+  --bb-surface-alt: #e9e8e1;
+
+  /* Three weights of line. --bb-line is the structural one that clears 3:1;
+     --bb-line-soft draws row rules; --bb-line-strong is for form fields. */
+  --bb-line: #7a766d;
+  --bb-line-soft: #d5d1c7;
+  --bb-line-strong: #5f5b53;
+
+  /* Text. Every step clears AAA on the darkest ground it ever touches, which
+     squeezes the ramp — "muted" now signals de-emphasis by size and weight as
+     much as by greyness. */
+  --bb-ink: #1a1917;
+  --bb-ink-soft: #3a3833;
+  --bb-ink-mute: #4b4841;
+  --bb-ink-dim: #5c584f;
+  --bb-ink-faint: #6d6960;
   /* Decorative only — the em dash standing in for an empty cell. */
-  --bb-ink-ghost: #d4d4d4;
+  --bb-ink-ghost: #b0aca2;
 
   /* Translucent, for the ticker strip that blurs what passes under it. */
-  --bb-veil: rgba(255, 255, 255, 0.94);
+  --bb-veil: rgba(246, 245, 241, 0.94);
 
-  /* The crest screen. Light in both themes — see the note in the .dark
-     block. Swap to a dark ground only alongside a knockout logo. */
-  --bb-curtain: #ffffff;
+  /* The crest screen. Light in both themes — public/logo.png is dark ink on
+     transparency, so a dark ground would swallow half of it. */
+  --bb-curtain: #f6f5f1;
 
-  --bb-positive: #047857;
-  --bb-info: #0369a1;
-  --bb-warn: #b45309;
-  --bb-danger: #be123c;
-  --bb-special: #6d28d9;
+  --bb-positive: #135a35;
+  --bb-info: #1c4d80;
+  --bb-warn: #684e00;
+  --bb-danger: #9e1c26;
+  --bb-special: #5a3f6b;
 
-  --bb-positive-fill: #ecfdf5;
-  --bb-positive-line: #a7f3d0;
-  --bb-info-fill: #f0f9ff;
-  --bb-info-line: #bae6fd;
-  --bb-warn-fill: #fffbeb;
-  --bb-warn-line: #fde68a;
-  --bb-danger-fill: #fff1f2;
-  --bb-danger-line: #fecdd3;
-  --bb-special-fill: #f5f3ff;
-  --bb-special-line: #ddd6fe;
-  --bb-neutral-fill: #fafafa;
-  --bb-neutral-line: #e5e5e5;
-  --bb-neutral-text: #525252;
+  --bb-positive-fill: #dbe7de;
+  --bb-positive-line: #9db8a6;
+  --bb-info-fill: #dbe3ed;
+  --bb-info-line: #a4b8ce;
+  --bb-warn-fill: #e8e0c6;
+  --bb-warn-line: #c4b68a;
+  --bb-danger-fill: #eddcdc;
+  --bb-danger-line: #ceabab;
+  --bb-special-fill: #e2dced;
+  --bb-special-line: #b8a9c9;
+  --bb-neutral-fill: #e9e8e1;
+  --bb-neutral-line: #c3bfb5;
+  --bb-neutral-text: #4b4841;
 
-  /* Chapter accents. `fill` backs a table's header and totals rows, so
-     `head` has to stay legible on it. */
-  --bb-amber-text: #92400e;
-  --bb-amber-rule: #f59e0b;
-  --bb-amber-fill: #fffbeb;
-  --bb-amber-head: #78350f;
-  --bb-amber-line: #fde68a;
+  /* Chapter accents. `head` is the text on `fill`, and it is deliberately the
+     primary ink rather than the accent: an accent on its own soft fill lands
+     below AA, which is what text-amber-900 on amber-50 was doing before. */
+  --bb-amber-text: #6e4110;
+  --bb-amber-rule: #6e4110;
+  --bb-amber-fill: #e2d5b8;
+  --bb-amber-head: #1a1917;
+  --bb-amber-line: #c4b491;
 
-  --bb-indigo-text: #3730a3;
-  --bb-indigo-rule: #6366f1;
-  --bb-indigo-fill: #eef2ff;
-  --bb-indigo-head: #312e81;
-  --bb-indigo-line: #c7d2fe;
+  --bb-indigo-text: #1c4d80;
+  --bb-indigo-rule: #1c4d80;
+  --bb-indigo-fill: #cfdaea;
+  --bb-indigo-head: #1a1917;
+  --bb-indigo-line: #a9bcd6;
 
-  --bb-teal-text: #115e59;
-  --bb-teal-rule: #14b8a6;
-  --bb-teal-fill: #f0fdfa;
-  --bb-teal-head: #134e4a;
-  --bb-teal-line: #99f6e4;
+  --bb-teal-text: #14564f;
+  --bb-teal-rule: #14564f;
+  --bb-teal-fill: #c9ded9;
+  --bb-teal-head: #1a1917;
+  --bb-teal-line: #9dc0b9;
 }
 
-/* DARK is not an inversion of the above.
+/* Dark is a separate design, not an inversion: the canvas stays genuinely
+   dark rather than drifting to mid-grey, zebra rows go DARKER so a longer
+   table emits less, text tops out at #e6e3de rather than pure white, and
+   every accent is desaturated against its light twin.
 
-   The ground is a warm near-black rather than pure black, so the panel is not
-   driving a hard #000 next to bright text. Body text stops short of pure
-   white for the same reason — #eae7e3 against #1c1b1a still measures 14:1,
-   which is past AAA, without the halo that #fff throws at that contrast.
-   Accents lose chroma and gain lightness: an amber that reads as warning at
-   #92400e on white is unreadable on black, so it moves to a soft gold. */
-.dark {
-  --bb-canvas: #141312;
-  --bb-surface: #1c1b1a;
-  --bb-surface-alt: #232120;
-  --bb-line: #302d2b;
-  --bb-line-strong: #423e3a;
+   Wrapped in `@media screen` so it simply does not exist on paper. Printing a
+   dark board then falls back to the light values above, with no duplicated
+   block to keep in sync. */
+@media screen {
+  .dark {
+    --background: #101215;
+    --foreground: #e6e3de;
+    --card: #1b1e23;
+    --card-foreground: #e6e3de;
+    --popover: #1b1e23;
+    --popover-foreground: #e6e3de;
+    --primary: #e6e3de;
+    --primary-foreground: #1b1e23;
+    --secondary: #13161a;
+    --secondary-foreground: #e6e3de;
+    --muted: #13161a;
+    --muted-foreground: #ada9a1;
+    --accent: #13161a;
+    --accent-foreground: #e6e3de;
+    --destructive: #e09aa0;
+    --border: #2e333a;
+    --input: #6b727d;
+    --ring: #8b877f;
+    --chart-1: #d6ab7a;
+    --chart-2: #97b7dc;
+    --chart-3: #8dbf9d;
+    --chart-4: #ccaa72;
+    --chart-5: #e09aa0;
+    --sidebar: #1b1e23;
+    --sidebar-foreground: #e6e3de;
+    --sidebar-primary: #e6e3de;
+    --sidebar-primary-foreground: #1b1e23;
+    --sidebar-accent: #13161a;
+    --sidebar-accent-foreground: #e6e3de;
+    --sidebar-border: #2e333a;
+    --sidebar-ring: #8b877f;
 
-  --bb-ink: #eae7e3;
-  --bb-ink-soft: #d4d0cb;
-  --bb-ink-mute: #a9a49e;
-  --bb-ink-dim: #9a938d;
-  --bb-ink-faint: #8a847d;
-  --bb-ink-ghost: #524c47;
+    --bb-canvas: #101215;
+    --bb-surface: #1b1e23;
+    --bb-surface-alt: #13161a;
 
-  --bb-veil: rgba(28, 27, 26, 0.94);
+    --bb-line: #6b727d;
+    --bb-line-soft: #2e333a;
+    --bb-line-strong: #838a95;
 
-  /* Deliberately NOT dark. The crest is dark ink on a transparent PNG, so
-     it would half-vanish on a dark ground. A bone keeps it legible while
-     sparing a dark-adapted eye the full-white flood of #ffffff. */
-  --bb-curtain: #e8e4de;
+    --bb-ink: #e6e3de;
+    --bb-ink-soft: #b8b4ad;
+    --bb-ink-mute: #ada9a1;
+    --bb-ink-dim: #9a968e;
+    --bb-ink-faint: #8b877f;
+    --bb-ink-ghost: #4d5158;
 
-  --bb-positive: #6cc08c;
-  --bb-info: #6aa9d9;
-  --bb-warn: #d9a05f;
-  --bb-danger: #e08488;
-  --bb-special: #ad9ae8;
+    --bb-veil: rgba(27, 30, 35, 0.94);
+    --bb-curtain: #ddd9d1;
 
-  --bb-positive-fill: #14231b;
-  --bb-positive-line: #275038;
-  --bb-info-fill: #142029;
-  --bb-info-line: #23415a;
-  --bb-warn-fill: #241f14;
-  --bb-warn-line: #4a3a20;
-  --bb-danger-fill: #2a1719;
-  --bb-danger-line: #4d282c;
-  --bb-special-fill: #1f1b2c;
-  --bb-special-line: #3a3054;
-  --bb-neutral-fill: #232120;
-  --bb-neutral-line: #383431;
-  --bb-neutral-text: #a9a49e;
+    --bb-positive: #8dbf9d;
+    --bb-info: #97b7dc;
+    --bb-warn: #ccaa72;
+    --bb-danger: #e09aa0;
+    --bb-special: #bda8d0;
 
-  --bb-amber-text: #e2b878;
-  --bb-amber-rule: #c98f3f;
-  --bb-amber-fill: #241d14;
-  --bb-amber-head: #f0d5a8;
-  --bb-amber-line: #3a2e1f;
+    --bb-positive-fill: #16241c;
+    --bb-positive-line: #2c4636;
+    --bb-info-fill: #16202b;
+    --bb-info-line: #2b3d51;
+    --bb-warn-fill: #241f16;
+    --bb-warn-line: #453a25;
+    --bb-danger-fill: #29191b;
+    --bb-danger-line: #4a2f33;
+    --bb-special-fill: #211d29;
+    --bb-special-line: #3d3549;
+    --bb-neutral-fill: #13161a;
+    --bb-neutral-line: #333940;
+    --bb-neutral-text: #ada9a1;
 
-  --bb-indigo-text: #a3b0ea;
-  --bb-indigo-rule: #6c7bd0;
-  --bb-indigo-fill: #1a1c2a;
-  --bb-indigo-head: #c5cdf5;
-  --bb-indigo-line: #2f3555;
+    --bb-amber-text: #d6ab7a;
+    --bb-amber-rule: #d6ab7a;
+    --bb-amber-fill: #2e2619;
+    --bb-amber-head: #e6e3de;
+    --bb-amber-line: #453a28;
 
-  --bb-teal-text: #7fc9bd;
-  --bb-teal-rule: #3f9c8d;
-  --bb-teal-fill: #142422;
-  --bb-teal-head: #a8e0d6;
-  --bb-teal-line: #234540;
+    --bb-indigo-text: #97b7dc;
+    --bb-indigo-rule: #97b7dc;
+    --bb-indigo-fill: #1d2734;
+    --bb-indigo-head: #e6e3de;
+    --bb-indigo-line: #33404f;
+
+    --bb-teal-text: #8cc3bb;
+    --bb-teal-rule: #8cc3bb;
+    --bb-teal-fill: #172624;
+    --bb-teal-head: #e6e3de;
+    --bb-teal-line: #2c4340;
+  }
 }
 
 @layer base {
@@ -301,8 +319,11 @@
 }
 
 /* --- Chapter accents -------------------------------------------------------
-   Named per chapter so src/lib/accents.ts can keep handing out complete,
-   literal class strings. Header and totals rows share one fill, as before. */
+   Plain CSS, not Tailwind utilities, for two reasons: a utility names a fixed
+   colour and cannot follow the theme, and Tailwind only emits a utility it can
+   find as a whole word in the source — a stale Turbopack scan silently
+   dropping newly-added classes has cost this project hours. Literal CSS in
+   this file always ships. src/lib/accents.ts hands out these names. */
 .bb-title-amber,
 .bb-strong-amber {
   color: var(--bb-amber-text);
@@ -425,7 +446,7 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 1px solid var(--bb-line-strong);
+  border: 1px solid var(--bb-line);
   border-radius: 9999px;
   background: var(--bb-surface);
   color: var(--bb-ink-dim);
@@ -446,50 +467,10 @@
 }
 
 /* --- Print ----------------------------------------------------------------
-   Dark mode would otherwise send a black page to the printer. Forcing the
-   light tokens back on is enough, because every colour on the board resolves
-   through them; the fixed chrome is hidden because it is furniture, not data. */
+   The dark values live inside @media screen, so paper already gets the light
+   palette with nothing to keep in sync. All that is left is hiding the
+   furniture. */
 @media print {
-  .dark {
-    --bb-canvas: #ffffff;
-    --bb-surface: #ffffff;
-    --bb-surface-alt: #fafafa;
-    --bb-line: #e5e5e5;
-    --bb-line-strong: #d4d4d4;
-    --bb-ink: #171717;
-    --bb-ink-soft: #262626;
-    --bb-ink-mute: #525252;
-    --bb-ink-dim: #737373;
-    --bb-ink-faint: #8a8a8a;
-    --bb-ink-ghost: #d4d4d4;
-    --bb-positive: #047857;
-    --bb-info: #0369a1;
-    --bb-warn: #b45309;
-    --bb-danger: #be123c;
-    --bb-special: #6d28d9;
-    --bb-positive-fill: #ecfdf5;
-    --bb-positive-line: #a7f3d0;
-    --bb-info-fill: #f0f9ff;
-    --bb-info-line: #bae6fd;
-    --bb-warn-fill: #fffbeb;
-    --bb-warn-line: #fde68a;
-    --bb-danger-fill: #fff1f2;
-    --bb-danger-line: #fecdd3;
-    --bb-special-fill: #f5f3ff;
-    --bb-special-line: #ddd6fe;
-    --bb-neutral-fill: #fafafa;
-    --bb-neutral-line: #e5e5e5;
-    --bb-neutral-text: #525252;
-    --bb-amber-text: #92400e;
-    --bb-amber-fill: #fffbeb;
-    --bb-amber-head: #78350f;
-    --bb-amber-line: #fde68a;
-    --bb-indigo-text: #3730a3;
-    --bb-indigo-fill: #eef2ff;
-    --bb-indigo-head: #312e81;
-    --bb-indigo-line: #c7d2fe;
-  }
-
   .bb-ticker,
   .bb-icon-btn {
     display: none !important;
