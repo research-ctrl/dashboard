@@ -5,8 +5,8 @@ import { useActionState } from "react";
 import type { ActionState } from "@/app/admin/actions";
 
 const field =
-  "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-500";
-const label = "mb-1 block text-[10px] tracking-[0.12em] text-neutral-500 uppercase";
+  "w-full rounded-md border border-line-strong px-3 py-2 text-sm text-ink outline-none focus:border-ink-dim";
+const label = "mb-1 block text-[10px] tracking-[0.12em] text-ink-dim uppercase";
 
 export function CredentialsForm({
   action,
@@ -70,7 +70,7 @@ export function CredentialsForm({
       )}
 
       {state.error && (
-        <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+        <p className="rounded-md border bb-badge-danger border px-3 py-2 text-xs text-danger">
           {state.error}
         </p>
       )}
@@ -78,7 +78,7 @@ export function CredentialsForm({
       <button
         type="submit"
         disabled={pending}
-        className="cursor-pointer rounded-md border border-neutral-900 bg-neutral-900 px-3 py-2 text-sm text-white transition-colors hover:bg-neutral-700 disabled:cursor-wait disabled:opacity-60"
+        className="cursor-pointer rounded-md border border-ink bg-ink px-3 py-2 text-sm text-canvas transition-colors hover:opacity-85 disabled:cursor-wait disabled:opacity-60"
       >
         {pending ? "Working…" : submitLabel}
       </button>

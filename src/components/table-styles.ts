@@ -1,18 +1,18 @@
 /** Shared class names so every table on the dashboard looks the same. */
 
 /** Card around a table — pair with the chapter accent's `card` border colour. */
-export const tableCard = "overflow-hidden rounded-xl border bg-white";
+export const tableCard = "overflow-hidden rounded-xl border bg-surface";
 
 /** Table root — monospace is wide, so tables run a step smaller than body text. */
 export const tableBase = "text-xs";
 
 /**
  * First column stays put when the table scrolls sideways.
- * Body cells add `bg-white`; header and footer cells add the accent tint,
+ * Body cells add `bg-surface`; header and footer cells add the accent tint,
  * otherwise scrolled content shows through.
  */
-export const stickyBase = "sticky left-0 z-10 border-r border-neutral-200";
-export const stickyCell = `${stickyBase} bg-white`;
+export const stickyBase = "sticky left-0 z-10 border-r border-line";
+export const stickyCell = `${stickyBase} bg-surface`;
 
 /** Headers wrap instead of forcing the table wider than the screen. */
 export const headCell =

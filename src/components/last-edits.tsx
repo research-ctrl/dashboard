@@ -66,6 +66,10 @@ function stamp(editedAt: Date, timeZone: string, abbreviation: string) {
  * utility. Keyframes are exactly the kind of newly-introduced class that a
  * stale Turbopack build silently drops, and a strip that mysteriously stops
  * moving is worse than no strip.
+ *
+ * The colours are --bb-* variables rather than the hex values they used to be.
+ * Inline CSS never sees a `dark:` variant, so hardcoding here would have left
+ * a white strip glued to the bottom of a dark board.
  */
 const css = `
 .bb-ticker {
@@ -78,8 +82,8 @@ const css = `
   display: flex;
   align-items: center;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.94);
-  border-top: 1px solid #e5e5e5;
+  background: var(--bb-veil);
+  border-top: 1px solid var(--bb-line);
   backdrop-filter: blur(6px);
   /* Never intercept a click meant for the table underneath. */
   pointer-events: none;
@@ -121,11 +125,11 @@ const css = `
   text-transform: uppercase;
 }
 
-.bb-ticker-who { color: #171717; font-weight: 500; }
-.bb-ticker-where { color: #737373; }
-.bb-ticker-change { color: #171717; }
-.bb-ticker-when { color: #a3a3a3; font-variant-numeric: tabular-nums; }
-.bb-ticker-sep { color: #d4d4d4; }
+.bb-ticker-who { color: var(--bb-ink); font-weight: 500; }
+.bb-ticker-where { color: var(--bb-ink-dim); }
+.bb-ticker-change { color: var(--bb-ink); }
+.bb-ticker-when { color: var(--bb-ink-faint); font-variant-numeric: tabular-nums; }
+.bb-ticker-sep { color: var(--bb-ink-ghost); }
 
 @media (prefers-reduced-motion: reduce) {
   .bb-ticker-track {

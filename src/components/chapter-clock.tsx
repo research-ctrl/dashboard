@@ -41,7 +41,7 @@ export function ChapterClock({
       <div className={`text-base tabular-nums ${accentClass}`}>
         {time ?? "--:--:--"}
       </div>
-      <div className="text-[10px] tracking-[0.15em] text-neutral-500 uppercase">
+      <div className="text-[10px] tracking-[0.15em] text-ink-dim uppercase">
         {label}
       </div>
     </div>

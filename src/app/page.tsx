@@ -2,6 +2,7 @@ import { ChapterColumn } from "@/components/chapter-column";
 import { LiveRefresh } from "@/components/live-refresh";
 import { LastEdits, readLastEdits } from "@/components/last-edits";
 import { LogoCurtain } from "@/components/logo-curtain";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { loadChapters } from "@/lib/load-chapters";
 
 /** Rendered per request: the board must never serve a stale page. */
@@ -15,7 +16,7 @@ export default async function Home() {
   const unlinked = chapters.filter((chapter) => chapter.spreadsheetId === "");
 
   return (
-    <main className="flex-1 bg-white">
+    <main className="flex-1 bg-canvas">
       <LiveRefresh />
       <LastEdits edits={lastEdits} />
 
@@ -24,10 +25,11 @@ export default async function Home() {
 
         <div className="mb-4 flex items-center justify-end gap-3">
           {unlinked.length > 0 && (
-            <span className="text-[10px] tracking-[0.12em] text-neutral-400 uppercase">
+            <span className="text-[10px] tracking-[0.12em] text-ink-faint uppercase">
               {unlinked.map((c) => c.name).join(", ")} — link a sheet in /admin
             </span>
           )}
+          <ThemeToggle />
           <LogoCurtain />
         </div>
 

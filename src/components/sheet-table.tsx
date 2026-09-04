@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import type { SheetTable } from "@/lib/sheets";
 import type { Accent } from "@/lib/accents";
-import { completionStyle, statusStyle } from "@/lib/status";
+import { completionStyle, isKnownStatus, statusStyle } from "@/lib/status";
 
 /**
  * Renders a sheet tab exactly as it comes: the sheet's own headers, its own
@@ -30,7 +30,7 @@ import { completionStyle, statusStyle } from "@/lib/status";
  * makes it unambiguous — money and counts align right, a percentage takes its
  * band colour, a known status becomes a pill.
  */
-const dash = <span className="text-neutral-300">—</span>;
+const dash = <span className="text-ink-ghost">—</span>;
 
 /** Money, counts, percentages — anything that should align right. */
 function isNumeric(value: string) {
@@ -53,10 +53,9 @@ function Cell({ value }: { value: string }) {
     );
   }
 
-  const status = statusStyle(text);
-  if (status.startsWith("border-") && !status.includes("neutral")) {
+  if (isKnownStatus(text)) {
     return (
-      <Badge variant="outline" className={status}>
+      <Badge variant="outline" className={statusStyle(text)}>
         {text}
       </Badge>
     );
@@ -109,7 +108,7 @@ export function SheetTable({
                   return (
                     <TableCell
                       key={column}
-                      className={`${stickyCell} ${textCell} font-medium text-neutral-900`}
+                      className={`${stickyCell} ${textCell} font-medium text-ink`}
                     >
                       {value.trim() === "" ? dash : value}
                     </TableCell>
@@ -121,8 +120,8 @@ export function SheetTable({
                     key={column}
                     className={
                       alignRight[column]
-                        ? `${numCell} text-neutral-800`
-                        : `${textCell} whitespace-normal text-neutral-600`
+                        ? `${numCell} text-ink-soft`
+                        : `${textCell} whitespace-normal text-ink-mute`
                     }
                   >
                     <Cell value={value} />

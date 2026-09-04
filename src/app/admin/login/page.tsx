@@ -19,12 +19,12 @@ export default async function LoginPage({
   const { next } = await searchParams;
 
   return (
-    <main className="flex-1 bg-white">
+    <main className="flex-1 bg-canvas">
       <div className="mx-auto w-full max-w-sm px-4 py-16">
-        <h1 className="text-lg font-medium tracking-[0.2em] text-neutral-900 uppercase">
+        <h1 className="text-lg font-medium tracking-[0.2em] text-ink uppercase">
           Sign in
         </h1>
-        <p className="mt-3 text-xs leading-relaxed text-neutral-600">
+        <p className="mt-3 text-xs leading-relaxed text-ink-mute">
           {next && next !== "/admin"
             ? "Sign in to see the board."
             : "Admin access to the connection settings."}

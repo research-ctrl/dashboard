@@ -35,7 +35,7 @@ function DeleteButton({ id }: { id: string }) {
         type="submit"
         disabled={pending}
         title={state.error ?? "Delete this entry"}
-        className="cursor-pointer text-[11px] text-neutral-400 underline underline-offset-2 transition-colors hover:text-rose-700 disabled:cursor-wait"
+        className="cursor-pointer text-[11px] text-ink-faint underline underline-offset-2 transition-colors hover:text-danger disabled:cursor-wait"
       >
         {pending ? "…" : "delete"}
       </button>
@@ -55,7 +55,7 @@ function ClearAllButton() {
         type="submit"
         disabled={pending}
         title={state.error ?? "Delete every entry"}
-        className="cursor-pointer rounded-md border border-neutral-200 px-2 py-1 text-[11px] text-neutral-500 transition-colors hover:border-rose-300 hover:text-rose-700 disabled:cursor-wait"
+        className="cursor-pointer rounded-md border border-line px-2 py-1 text-[11px] text-ink-dim transition-colors hover:border-danger hover:text-danger disabled:cursor-wait"
       >
         {pending ? "Clearing…" : "Clear all"}
       </button>
@@ -65,22 +65,22 @@ function ClearAllButton() {
 
 export function EditLog({ entries }: { entries: LogEntry[] }) {
   return (
-    <section className="mt-6 rounded-xl border border-neutral-200 p-4">
+    <section className="mt-6 rounded-xl border border-line p-4">
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-[10px] font-medium tracking-[0.15em] text-neutral-500 uppercase">
+        <h2 className="text-[10px] font-medium tracking-[0.15em] text-ink-dim uppercase">
           Update log
         </h2>
         {entries.length > 0 && <ClearAllButton />}
       </div>
 
-      <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">
+      <p className="mt-2 text-[11px] leading-relaxed text-ink-dim">
         Every sheet edit the dashboard was told about. The newest entry per
         chapter is what scrolls along the bottom of the board. Only the last 100
         per chapter are kept.
       </p>
 
       {entries.length === 0 ? (
-        <p className="mt-3 text-[11px] text-neutral-400">
+        <p className="mt-3 text-[11px] text-ink-faint">
           Nothing logged yet — edit a sheet and it will appear here.
         </p>
       ) : (
@@ -91,14 +91,14 @@ export function EditLog({ entries }: { entries: LogEntry[] }) {
               className="flex items-baseline justify-between gap-3 text-[11px]"
             >
               <span className="min-w-0">
-                <span className="text-neutral-400">{entry.stamp}</span>{" "}
-                <span className="font-medium text-neutral-900">
+                <span className="text-ink-faint">{entry.stamp}</span>{" "}
+                <span className="font-medium text-ink">
                   {entry.chapterName}
                 </span>{" "}
                 {entry.owner && (
-                  <span className="text-neutral-900">{entry.owner}</span>
+                  <span className="text-ink">{entry.owner}</span>
                 )}{" "}
-                <span className="text-neutral-500">
+                <span className="text-ink-dim">
                   {entry.tab}
                   {entry.rowLabel ? ` · ${entry.rowLabel}` : ""}
                   {entry.column ? ` · ${entry.column}` : ""}
@@ -106,11 +106,11 @@ export function EditLog({ entries }: { entries: LogEntry[] }) {
                 {(entry.oldValue || entry.newValue) && (
                   <>
                     {" "}
-                    <span className="text-rose-700 line-through">
+                    <span className="text-danger line-through">
                       {entry.oldValue || "blank"}
                     </span>
-                    <span className="text-neutral-400"> → </span>
-                    <span className="text-emerald-700">
+                    <span className="text-ink-faint"> → </span>
+                    <span className="text-positive">
                       {entry.newValue || "blank"}
                     </span>
                   </>

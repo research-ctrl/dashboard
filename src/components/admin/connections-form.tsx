@@ -48,8 +48,8 @@ const TABS = tabSlots.map((slot) => ({
 }));
 
 const field =
-  "w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-xs text-neutral-900 outline-none focus:border-neutral-500";
-const label = "mb-1 block text-[10px] tracking-[0.12em] text-neutral-500 uppercase";
+  "w-full rounded-md border border-line-strong px-2.5 py-1.5 text-xs text-ink outline-none focus:border-ink-dim";
+const label = "mb-1 block text-[10px] tracking-[0.12em] text-ink-dim uppercase";
 
 /** Accepts a full Sheets URL or a bare id, and returns the id. */
 export function extractSheetId(input: string): string {
@@ -68,7 +68,7 @@ function ChapterCard({ connection }: { connection: ConnectionRow }) {
   return (
     <form
       action={formAction}
-      className={`rounded-xl border bg-white p-5 ${accent.card}`}
+      className={`rounded-xl border bg-canvas p-5 ${accent.card}`}
     >
       <input type="hidden" name="id" value={connection.id} />
 
@@ -80,9 +80,9 @@ function ChapterCard({ connection }: { connection: ConnectionRow }) {
         </h2>
         <span className="text-[10px] tracking-[0.12em] uppercase">
           {connection.spreadsheetId ? (
-            <span className="text-emerald-700">Connected</span>
+            <span className="text-positive">Connected</span>
           ) : (
-            <span className="text-neutral-400">Not connected</span>
+            <span className="text-ink-faint">Not connected</span>
           )}
         </span>
       </div>
@@ -127,10 +127,10 @@ function ChapterCard({ connection }: { connection: ConnectionRow }) {
               className={field}
             />
             <details className="mt-1.5">
-              <summary className="cursor-pointer text-[11px] text-neutral-400 hover:text-neutral-700">
+              <summary className="cursor-pointer text-[11px] text-ink-faint hover:text-ink">
                 expected columns
               </summary>
-              <ol className="mt-1 list-decimal pl-4 text-[11px] leading-relaxed text-neutral-500">
+              <ol className="mt-1 list-decimal pl-4 text-[11px] leading-relaxed text-ink-dim">
                 {tab.columns.map((column) => (
                   <li key={column}>{column}</li>
                 ))}
@@ -141,7 +141,7 @@ function ChapterCard({ connection }: { connection: ConnectionRow }) {
       </div>
 
       {state.error && (
-        <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+        <p className="mt-4 rounded-md border bb-badge-danger border px-3 py-2 text-xs text-danger">
           {state.error}
         </p>
       )}
@@ -149,7 +149,7 @@ function ChapterCard({ connection }: { connection: ConnectionRow }) {
       <button
         type="submit"
         disabled={pending}
-        className="mt-5 cursor-pointer rounded-md border border-neutral-300 px-3 py-1.5 text-xs text-neutral-900 transition-colors hover:border-neutral-500 hover:bg-neutral-50 disabled:cursor-wait disabled:opacity-60"
+        className="mt-5 cursor-pointer rounded-md border border-line-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-ink-dim hover:bg-surface-alt disabled:cursor-wait disabled:opacity-60"
       >
         {pending ? "Saving…" : "Save"}
       </button>

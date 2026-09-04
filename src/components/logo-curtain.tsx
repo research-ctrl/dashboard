@@ -16,26 +16,8 @@ const css = `
   pointer-events: none;
 }
 
-.bb-eye {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #d4d4d4;
-  border-radius: 9999px;
-  background: #ffffff;
-  color: #737373;
-  cursor: pointer;
-  transition: color 120ms, border-color 120ms, background 120ms;
-}
-.bb-eye:hover {
-  color: #171717;
-  border-color: #a3a3a3;
-  background: #fafafa;
-}
 .bb-toggle:focus-visible + .bb-eye {
-  outline: 2px solid #737373;
+  outline: 2px solid var(--bb-ink-dim);
   outline-offset: 2px;
 }
 
@@ -50,7 +32,7 @@ const css = `
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: #ffffff;
+  background: var(--bb-canvas);
   cursor: pointer;
 }
 .bb-toggle:checked ~ .bb-eye {
@@ -69,7 +51,7 @@ const css = `
   position: absolute;
   top: 16px;
   right: 16px;
-  color: #a3a3a3;
+  color: var(--bb-ink-faint);
 }
 `;
 
@@ -102,7 +84,7 @@ export function LogoCurtain() {
 
       <label
         htmlFor="bb-curtain-toggle"
-        className="bb-eye"
+        className="bb-icon-btn bb-eye"
         title="Hide the board"
         aria-label="Hide the board"
       >

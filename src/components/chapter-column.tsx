@@ -4,7 +4,7 @@ import type { LoadedChapter } from "@/lib/load-chapters";
 import { ACCENTS } from "@/lib/accents";
 
 const tableTitle =
-  "mb-2 text-[11px] font-medium tracking-[0.15em] text-neutral-500 uppercase";
+  "mb-2 text-[11px] font-medium tracking-[0.15em] text-ink-dim uppercase";
 
 export function ChapterColumn({ chapter }: { chapter: LoadedChapter }) {
   const accent = ACCENTS[chapter.accent];
@@ -35,7 +35,7 @@ export function ChapterColumn({ chapter }: { chapter: LoadedChapter }) {
             <SheetTable table={result.table} accent={accent} />
           ) : (
             /* Never quietly substitute other data — say what failed. */
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+            <p className="bb-badge-danger rounded-xl border px-3 py-2 text-xs">
               Could not read the “{tab}” tab — {result.problem}
             </p>
           )}
