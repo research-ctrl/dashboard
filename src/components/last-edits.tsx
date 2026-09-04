@@ -101,10 +101,14 @@ const css = `
 
 /* Identical copies sit side by side, so shifting the track by exactly one
    copy width and starting over is seamless - there is no jump to hide.
-   ${100 / COPIES}% of the track is precisely one copy. */
+   ${100 / COPIES}% of the track is precisely one copy.
+
+   The track travels LEFT, which reads as text entering from the right and
+   leaving at the left - the direction a news ticker runs, and the one that
+   matches how the line itself is read. */
 @keyframes bb-ticker-scroll {
-  from { transform: translateX(-${100 / COPIES}%); }
-  to   { transform: translateX(0); }
+  from { transform: translateX(0); }
+  to   { transform: translateX(-${100 / COPIES}%); }
 }
 
 .bb-ticker-group {

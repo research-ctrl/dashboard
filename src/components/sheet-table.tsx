@@ -120,8 +120,8 @@ export function SheetTable({
                     key={column}
                     className={
                       alignRight[column]
-                        ? `${numCell} text-ink-soft`
-                        : `${textCell} whitespace-normal text-ink-mute`
+                        ? `${numCell} text-data`
+                        : `${textCell} whitespace-normal text-data-soft`
                     }
                   >
                     <Cell value={value} />

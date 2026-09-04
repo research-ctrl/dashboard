@@ -25,6 +25,8 @@
   --color-ink-dim: var(--bb-ink-dim);
   --color-ink-faint: var(--bb-ink-faint);
   --color-ink-ghost: var(--bb-ink-ghost);
+  --color-data: var(--bb-data);
+  --color-data-soft: var(--bb-data-soft);
   --color-positive: var(--bb-positive);
   --color-info: var(--bb-info);
   --color-warn: var(--bb-warn);
@@ -157,6 +159,15 @@
   /* Decorative only — the em dash standing in for an empty cell. */
   --bb-ink-ghost: #b0aca2;
 
+  /* The figures and text INSIDE tables, kept separate from the ink ramp
+     above. The board is read from about five metres, where the ramp's
+     lower steps stopped being legible and started being a squint: cells
+     were sitting at 10.7:1 and 8.4:1 while the row label next to them had
+     16.1:1. These bring the data up to the label's weight. Only the data
+     moved — labels, captions and admin prose still use the ink ramp. */
+  --bb-data: #221f1c;
+  --bb-data-soft: #332f2a;
+
   /* Translucent, for the ticker strip that blurs what passes under it. */
   --bb-veil: rgba(246, 245, 241, 0.94);
 
@@ -269,6 +280,13 @@
     --bb-ink-dim: #9a968e;
     --bb-ink-faint: #8b877f;
     --bb-ink-ghost: #4d5158;
+
+    /* Dark had the wider gap of the two: cells at 8.1:1 and 7.1:1 against
+       a 13.1:1 label. Data now matches the label, and stops there rather
+       than going brighter — past this, pale text on a dark ground starts
+       to bloom, which is the problem the palette exists to avoid. */
+    --bb-data: #e6e3de;
+    --bb-data-soft: #d2cec7;
 
     --bb-veil: rgba(27, 30, 35, 0.94);
     --bb-curtain: #ddd9d1;
