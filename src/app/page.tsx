@@ -1,4 +1,5 @@
 import { ChapterColumn } from "@/components/chapter-column";
+import { ChapterViewInputs } from "@/components/chapter-focus";
 import { LiveRefresh } from "@/components/live-refresh";
 import { LastEdits, readLastEdits } from "@/components/last-edits";
 import { LogoCurtain } from "@/components/logo-curtain";
@@ -33,9 +34,13 @@ export default async function Home() {
           <LogoCurtain />
         </div>
 
+        {/* Holds which chapter is expanded. Must stay a sibling of the
+            board below — the CSS in globals.css reaches it with `~`. */}
+        <ChapterViewInputs chapterIds={chapters.map((chapter) => chapter.id)} />
+
         {/* Two parts: left and right. Stacks on small screens.
             min-w-0 keeps a wide table from stretching its column past a half. */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 2xl:gap-10">
+        <div className="bb-board grid grid-cols-1 gap-8 lg:grid-cols-2 2xl:gap-10">
           {chapters.map((chapter) => (
             <ChapterColumn key={chapter.id} chapter={chapter} />
           ))}

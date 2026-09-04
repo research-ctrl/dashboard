@@ -466,13 +466,96 @@
   outline-offset: 2px;
 }
 
+/* --- Expand one chapter ----------------------------------------------------
+   Three hidden radios in page.tsx hold the view; these rules read them. The
+   inputs are siblings of .bb-board, which is what `~` needs.
+
+   "Both" is the state where NO rule fires, so no radio needs defaultChecked —
+   which is deliberate. React only writes an input's checkedness when a
+   `checked` or `defaultChecked` prop is present, and the board re-renders on
+   every sheet edit and every tab refocus. Leaving the props off is what keeps
+   an expanded chapter expanded while someone is reading it.
+
+   Unlayered on purpose: these override Tailwind's lg:grid-cols-2, because
+   unlayered rules beat anything in a layer regardless of media query. */
+.bb-view {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bb-focus-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--bb-line);
+  border-radius: 8px;
+  background: var(--bb-surface);
+  color: var(--bb-ink-dim);
+  cursor: pointer;
+  transition:
+    color 120ms,
+    border-color 120ms,
+    background 120ms;
+}
+.bb-focus-btn:hover {
+  color: var(--bb-ink);
+  border-color: var(--bb-ink-faint);
+  background: var(--bb-surface-alt);
+}
+/* A label is not focusable, so keyboard focus lands on the hidden radio. Show
+   it on whichever control that radio drives, or the ring is invisible. */
+.bb-focus-btn:focus-visible,
+#bb-view-goa:focus-visible ~ .bb-board > [data-chapter="goa"] .bb-focus-in,
+#bb-view-portugal:focus-visible
+  ~ .bb-board
+  > [data-chapter="portugal"]
+  .bb-focus-in,
+#bb-view-both:focus-visible ~ .bb-board .bb-focus-out {
+  outline: 2px solid var(--bb-ink-dim);
+  outline-offset: 2px;
+}
+
+/* The way back is only shown once there is something to come back from. */
+.bb-focus-out {
+  display: none;
+}
+
+#bb-view-goa:checked ~ .bb-board,
+#bb-view-portugal:checked ~ .bb-board {
+  grid-template-columns: 1fr;
+}
+
+#bb-view-goa:checked ~ .bb-board > [data-chapter="portugal"],
+#bb-view-portugal:checked ~ .bb-board > [data-chapter="goa"] {
+  display: none;
+}
+
+#bb-view-goa:checked ~ .bb-board > [data-chapter="goa"] .bb-focus-in,
+#bb-view-portugal:checked ~ .bb-board > [data-chapter="portugal"] .bb-focus-in {
+  display: none;
+}
+
+#bb-view-goa:checked ~ .bb-board > [data-chapter="goa"] .bb-focus-out,
+#bb-view-portugal:checked
+  ~ .bb-board
+  > [data-chapter="portugal"]
+  .bb-focus-out {
+  display: inline-flex;
+}
+
 /* --- Print ----------------------------------------------------------------
    The dark values live inside @media screen, so paper already gets the light
    palette with nothing to keep in sync. All that is left is hiding the
    furniture. */
 @media print {
   .bb-ticker,
-  .bb-icon-btn {
+  .bb-icon-btn,
+  .bb-focus-btn {
     display: none !important;
   }
 }

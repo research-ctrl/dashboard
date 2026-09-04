@@ -1,4 +1,5 @@
 import { ChapterClock } from "@/components/chapter-clock";
+import { ChapterFocus } from "@/components/chapter-focus";
 import { SheetTable } from "@/components/sheet-table";
 import type { LoadedChapter } from "@/lib/load-chapters";
 import { ACCENTS } from "@/lib/accents";
@@ -10,7 +11,7 @@ export function ChapterColumn({ chapter }: { chapter: LoadedChapter }) {
   const accent = ACCENTS[chapter.accent];
 
   return (
-    <section className="flex min-w-0 flex-col gap-6">
+    <section className="flex min-w-0 flex-col gap-6" data-chapter={chapter.id}>
       <div>
         <div className="flex items-start justify-between gap-4">
           <h2
@@ -18,11 +19,14 @@ export function ChapterColumn({ chapter }: { chapter: LoadedChapter }) {
           >
             {chapter.name}
           </h2>
-          <ChapterClock
-            timeZone={chapter.timeZone}
-            label={chapter.timeZoneLabel}
-            accentClass={accent.title}
-          />
+          <div className="flex shrink-0 items-start gap-3">
+            <ChapterClock
+              timeZone={chapter.timeZone}
+              label={chapter.timeZoneLabel}
+              accentClass={accent.title}
+            />
+            <ChapterFocus chapterId={chapter.id} name={chapter.name} />
+          </div>
         </div>
         <div className={`mt-3 h-1 w-full rounded-full ${accent.rule}`} />
       </div>
