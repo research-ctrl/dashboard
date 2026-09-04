@@ -14,8 +14,11 @@ export type LastEdit = {
   editedAt: Date;
 };
 
-/** Height of the strip. The board reserves this much space beneath itself. */
-export const TICKER_HEIGHT = 28;
+/**
+ * Height of the strip, and the space the board reserves for it, both come from
+ * --bb-ticker-h in globals.css. It is fluid, so on a 42" panel the strip is not
+ * a 28px sliver with 11px text in it.
+ */
 
 /**
  * How many times the content is repeated across the track.
@@ -78,7 +81,7 @@ const css = `
   right: 0;
   bottom: 0;
   z-index: 30;
-  height: ${TICKER_HEIGHT}px;
+  height: var(--bb-ticker-h);
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -113,9 +116,9 @@ const css = `
 .bb-ticker-item {
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
-  padding: 0 22px;
-  font-size: 11px;
+  gap: 0.55em;
+  padding: 0 2em;
+  font-size: var(--bb-ticker-text);
   line-height: 1;
 }
 

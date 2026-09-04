@@ -3,8 +3,12 @@
 /** Card around a table — pair with the chapter accent's `card` border colour. */
 export const tableCard = "overflow-hidden rounded-xl border bg-surface";
 
-/** Table root — monospace is wide, so tables run a step smaller than body text. */
-export const tableBase = "text-xs";
+/**
+ * Table root. Monospace is wide, so tables run a step smaller than body text.
+ * bb-t-body is fluid against the chapter column — see the type scale in
+ * globals.css — so this grows when the chapter is expanded or the screen is.
+ */
+export const tableBase = "bb-t-body";
 
 /**
  * First column stays put when the table scrolls sideways.
@@ -16,10 +20,11 @@ export const stickyCell = `${stickyBase} bg-surface`;
 
 /** Headers wrap instead of forcing the table wider than the screen. */
 export const headCell =
-  "h-auto px-1.5 py-2.5 align-bottom text-[10px] leading-tight whitespace-normal";
+  "h-auto align-bottom leading-tight whitespace-normal bb-t-head";
 
 /** Numeric cells: right aligned, aligned digits, never wrapped. */
-export const numCell = "px-1.5 py-2.5 text-right tabular-nums whitespace-nowrap";
+export const numCell =
+  "bb-t-cell text-right tabular-nums whitespace-nowrap";
 
 /** Plain text cell. */
-export const textCell = "px-1.5 py-2.5";
+export const textCell = "bb-t-cell";

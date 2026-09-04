@@ -160,6 +160,13 @@
   /* Translucent, for the ticker strip that blurs what passes under it. */
   --bb-veil: rgba(246, 245, 241, 0.94);
 
+  /* The strip runs the full width of the page, so it scales with the
+     viewport rather than with a chapter column. 28px on a 1440px laptop,
+     exactly what it was before. The board reserves twice this below
+     itself, so the two can never drift apart. */
+  --bb-ticker-h: clamp(28px, 1.05vw + 12.9px, 48px);
+  --bb-ticker-text: clamp(11px, 0.42vw + 5px, 20px);
+
   /* The crest screen. Light in both themes — public/logo.png is dark ink on
      transparency, so a dark ground would swallow half of it. */
   --bb-curtain: #f6f5f1;
@@ -466,6 +473,68 @@
   outline-offset: 2px;
 }
 
+/* --- Type scale ------------------------------------------------------------
+   The board is read from across a room, and the same table renders at two very
+   different widths: about half the screen in the normal view, and nearly all of
+   it when a chapter is expanded.
+
+   So the type keys off the CHAPTER COLUMN, not the viewport. A viewport-based
+   scale cannot tell those apart — the screen is 3840px wide either way — and it
+   would leave an expanded chapter with the same small type it had at half the
+   width. `cqi` is 1% of the container's inline size, so one declaration covers
+   a laptop, a 5K iMac, a 42" panel, and expanded-vs-split on all of them.
+
+   Every clamp is anchored so a ~690px column — one half of a 1440px laptop —
+   lands on exactly the size the board used before. Nothing gets smaller than
+   it is today; the growth is all above that.
+
+   Sizes are plain CSS classes rather than Tailwind utilities for the same
+   reason the accents are: newly-added arbitrary values are what a stale
+   Turbopack scan drops, and text silently failing to resize is hard to tell
+   from text that simply looks the same.
+
+   NOTE: cqi resolves against an ancestor container, never the element's own
+   box, so these must be set on descendants of [data-chapter] — which they all
+   are. Setting them on [data-chapter] itself would silently measure the
+   viewport instead. */
+.bb-board > [data-chapter] {
+  container-type: inline-size;
+}
+
+.bb-t-title {
+  /* 18px at a 690px column, 29px when a chapter is expanded on a 5K iMac. */
+  font-size: clamp(18px, 0.6cqi + 13.9px, 34px);
+}
+.bb-t-clock {
+  font-size: clamp(16px, 0.5cqi + 12.6px, 30px);
+}
+.bb-t-label {
+  font-size: clamp(11px, 0.38cqi + 8.4px, 20px);
+}
+.bb-t-micro {
+  font-size: clamp(10px, 0.35cqi + 7.6px, 18px);
+}
+.bb-t-body {
+  font-size: clamp(12px, 0.42cqi + 9.1px, 22px);
+}
+
+/* Header cells. `color: inherit` is load-bearing: ui/table.tsx puts
+   `text-foreground` on every <th>, which was overriding the accent colour the
+   row sets, leaving --bb-*-head dead. Inheriting hands the row's colour back
+   without editing a vendored shadcn primitive that `shadcn add` would
+   regenerate. */
+.bb-t-head {
+  font-size: clamp(10px, 0.35cqi + 7.6px, 18px);
+  color: inherit;
+  padding: 1em 0.6em;
+}
+
+/* Cell padding in em, so it grows with the text rather than leaving big type
+   crammed into small rows. 0.833em x 0.5em reproduces today's 10px x 6px. */
+.bb-t-cell {
+  padding: 0.833em 0.5em;
+}
+
 /* --- Expand one chapter ----------------------------------------------------
    Three hidden radios in page.tsx hold the view; these rules read them. The
    inputs are siblings of .bb-board, which is what `~` needs.
@@ -546,6 +615,13 @@
   > [data-chapter="portugal"]
   .bb-focus-out {
   display: inline-flex;
+}
+
+/* Space under the board for the fixed strip. Keyed off the same variable,
+   because a hardcoded pb-14 silently stopped clearing it the moment the
+   strip grew. */
+.bb-under-ticker {
+  padding-bottom: calc(var(--bb-ticker-h) * 2);
 }
 
 /* --- Print ----------------------------------------------------------------
