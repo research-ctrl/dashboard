@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/admin/actions";
 import { ConnectionsForm } from "@/components/admin/connections-form";
 import { EditLog, type LogEntry } from "@/components/admin/edit-log";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { chapters as chapterMeta } from "@/data/chapters";
 import { getAdminUser, needsSetup } from "@/lib/auth";
 import { readConnectionStatus } from "@/lib/connection-status";
@@ -61,14 +62,17 @@ export default async function AdminPage() {
           <h1 className="text-lg font-medium tracking-[0.2em] text-ink uppercase">
             Connections
           </h1>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="cursor-pointer text-xs text-ink-dim underline underline-offset-4 hover:text-ink"
-            >
-              Sign out {admin.email}
-            </button>
-          </form>
+          <div className="flex items-center gap-3">
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="cursor-pointer text-xs text-ink-dim underline underline-offset-4 hover:text-ink"
+              >
+                Sign out {admin.email}
+              </button>
+            </form>
+            <ThemeToggle />
+          </div>
         </div>
 
         <p className="mt-3 max-w-2xl text-xs leading-relaxed text-ink-mute">

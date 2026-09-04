@@ -48,7 +48,7 @@ const TABS = tabSlots.map((slot) => ({
 }));
 
 const field =
-  "w-full rounded-md border border-line-strong px-2.5 py-1.5 text-xs text-ink outline-none focus:border-ink-dim";
+  "w-full rounded-md border border-line-strong bg-surface px-2.5 py-1.5 text-xs text-ink outline-none focus:border-ink-dim";
 const label = "mb-1 block text-[10px] tracking-[0.12em] text-ink-dim uppercase";
 
 /** Accepts a full Sheets URL or a bare id, and returns the id. */

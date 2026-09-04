@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { setupFirstAdmin } from "@/app/admin/actions";
 import { CredentialsForm } from "@/components/admin/credentials-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { needsSetup } from "@/lib/auth";
 
 export const metadata = { title: "First admin" };
@@ -16,9 +17,12 @@ export default async function SetupPage() {
   return (
     <main className="flex-1 bg-canvas">
       <div className="mx-auto w-full max-w-sm px-4 py-16">
-        <h1 className="text-lg font-medium tracking-[0.2em] text-ink uppercase">
-          First admin
-        </h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-lg font-medium tracking-[0.2em] text-ink uppercase">
+            First admin
+          </h1>
+          <ThemeToggle />
+        </div>
         <p className="mt-3 text-xs leading-relaxed text-ink-mute">
           No admin exists yet. Create one and this page shuts itself off - after
           this, everyone signs in at /admin/login.

@@ -175,6 +175,10 @@
   /* Translucent, for the ticker strip that blurs what passes under it. */
   --bb-veil: rgba(255, 255, 255, 0.94);
 
+  /* The crest screen. Light in both themes — see the note in the .dark
+     block. Swap to a dark ground only alongside a knockout logo. */
+  --bb-curtain: #ffffff;
+
   --bb-positive: #047857;
   --bb-info: #0369a1;
   --bb-warn: #b45309;
@@ -239,6 +243,11 @@
   --bb-ink-ghost: #524c47;
 
   --bb-veil: rgba(28, 27, 26, 0.94);
+
+  /* Deliberately NOT dark. The crest is dark ink on a transparent PNG, so
+     it would half-vanish on a dark ground. A bone keeps it legible while
+     sparing a dark-adapted eye the full-white flood of #ffffff. */
+  --bb-curtain: #e8e4de;
 
   --bb-positive: #6cc08c;
   --bb-info: #6aa9d9;
@@ -434,4 +443,55 @@
 .bb-icon-btn:focus-visible {
   outline: 2px solid var(--bb-ink-dim);
   outline-offset: 2px;
+}
+
+/* --- Print ----------------------------------------------------------------
+   Dark mode would otherwise send a black page to the printer. Forcing the
+   light tokens back on is enough, because every colour on the board resolves
+   through them; the fixed chrome is hidden because it is furniture, not data. */
+@media print {
+  .dark {
+    --bb-canvas: #ffffff;
+    --bb-surface: #ffffff;
+    --bb-surface-alt: #fafafa;
+    --bb-line: #e5e5e5;
+    --bb-line-strong: #d4d4d4;
+    --bb-ink: #171717;
+    --bb-ink-soft: #262626;
+    --bb-ink-mute: #525252;
+    --bb-ink-dim: #737373;
+    --bb-ink-faint: #8a8a8a;
+    --bb-ink-ghost: #d4d4d4;
+    --bb-positive: #047857;
+    --bb-info: #0369a1;
+    --bb-warn: #b45309;
+    --bb-danger: #be123c;
+    --bb-special: #6d28d9;
+    --bb-positive-fill: #ecfdf5;
+    --bb-positive-line: #a7f3d0;
+    --bb-info-fill: #f0f9ff;
+    --bb-info-line: #bae6fd;
+    --bb-warn-fill: #fffbeb;
+    --bb-warn-line: #fde68a;
+    --bb-danger-fill: #fff1f2;
+    --bb-danger-line: #fecdd3;
+    --bb-special-fill: #f5f3ff;
+    --bb-special-line: #ddd6fe;
+    --bb-neutral-fill: #fafafa;
+    --bb-neutral-line: #e5e5e5;
+    --bb-neutral-text: #525252;
+    --bb-amber-text: #92400e;
+    --bb-amber-fill: #fffbeb;
+    --bb-amber-head: #78350f;
+    --bb-amber-line: #fde68a;
+    --bb-indigo-text: #3730a3;
+    --bb-indigo-fill: #eef2ff;
+    --bb-indigo-head: #312e81;
+    --bb-indigo-line: #c7d2fe;
+  }
+
+  .bb-ticker,
+  .bb-icon-btn {
+    display: none !important;
+  }
 }

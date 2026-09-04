@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import type { ActionState } from "@/app/admin/actions";
 
 const field =
-  "w-full rounded-md border border-line-strong px-3 py-2 text-sm text-ink outline-none focus:border-ink-dim";
+  "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ink-dim";
 const label = "mb-1 block text-[10px] tracking-[0.12em] text-ink-dim uppercase";
 
 export function CredentialsForm({
